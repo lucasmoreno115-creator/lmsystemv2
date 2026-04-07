@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LM System | Triagem Inteligente</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="header">
+        <p class="eyebrow">LM System</p>
+        <h1>Triagem Inteligente Fitness</h1>
+        <p class="subtitle">Diagnóstico técnico, classificação e recomendação comercial em um único fluxo.</p>
+      </header>
+
+      <section class="card">
+        <form id="lead-form" novalidate>
+          <div class="grid">
+            <label>Nome<input type="text" name="name" required /></label>
+            <label>E-mail<input type="email" name="email" required /></label>
+            <label>WhatsApp<input type="text" name="whatsapp" required /></label>
+            <label>Objetivo
+              <select name="goal" required>
+                <option value="">Selecione</option>
+                <option value="emagrecimento">Emagrecimento</option>
+                <option value="hipertrofia">Hipertrofia</option>
+                <option value="performance">Performance</option>
+                <option value="saude">Saúde</option>
+              </select>
+            </label>
+            <label>Frequência de treino (1-5)
+              <input type="number" min="1" max="5" name="trainingFrequency" required />
+            </label>
+            <label>Experiência de treino (1-5)
+              <input type="number" min="1" max="5" name="trainingExperience" required />
+            </label>
+            <label>Adesão alimentar (1-5)
+              <input type="number" min="1" max="5" name="foodAdherence" required />
+            </label>
+            <label>Qualidade do sono (1-5)
+              <input type="number" min="1" max="5" name="sleepQuality" required />
+            </label>
+            <label>Nível de estresse (1-5)
+              <input type="number" min="1" max="5" name="stressLevel" required />
+            </label>
+            <label>Dor/lesão ativa (1-5)
+              <input type="number" min="1" max="5" name="painInjury" required />
+            </label>
+            <label>Histórico de consistência (1-5)
+              <input type="number" min="1" max="5" name="consistencyHistory" required />
+            </label>
+            <label>Nível de motivação (1-5)
+              <input type="number" min="1" max="5" name="motivationLevel" required />
+            </label>
+          </div>
+
+          <p id="form-error" class="error" role="alert" aria-live="polite"></p>
+          <button id="submit-btn" type="submit">Gerar Diagnóstico</button>
+        </form>
+      </section>
+
+      <section id="result-card" class="card hidden" aria-live="polite"></section>
+    </main>
+
+    <script type="module" src="./script.js"></script>
+  </body>
+</html>

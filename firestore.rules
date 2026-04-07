@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /lm_leads/{leadId} {
+      allow read: if false;
+      allow create: if isValidLeadCreate();
+      allow update, delete: if false;
+
+      function isValidLeadCreate() {
+        return request.resource.data.keys().hasOnly([
+            'name', 'email', 'whatsapp', 'goal', 'lmScore', 'classification', 'tags',
+            'leadValue', 'recommendedOffer', 'dimensions', 'coachSummary', 'status', 'createdAt'
+          ])
+          && request.resource.data.name is string
+          && request.resource.data.email is string
+          && request.resource.data.whatsapp is string
+          && request.resource.data.goal in ['emagrecimento', 'hipertrofia', 'performance', 'saude']
+          && request.resource.data.lmScore is int
+          && request.resource.data.lmScore >= 0
+          && request.resource.data.lmScore <= 100
+          && request.resource.data.classification is string
+          && request.resource.data.tags is list
+          && request.resource.data.tags.size() <= 5
+          && request.resource.data.leadValue in ['high', 'medium', 'low']
+          && request.resource.data.recommendedOffer in ['produto_digital', 'consultoria_online', 'presencial']
+          && request.resource.data.dimensions is map
+          && request.resource.data.coachSummary is string
+          && request.resource.data.status == 'NEW'
+          && request.resource.data.createdAt == request.time;
+      }
+    }
+  }
+}
