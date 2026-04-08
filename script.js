@@ -6,10 +6,10 @@ import { createSubmitGuard } from './src/ui/submitGuards.js';
 import { renderResult } from './src/ui/resultRenderer.js';
 
 const firebaseConfig = {
-  apiKey: 'REPLACE_ME',
-  authDomain: 'REPLACE_ME.firebaseapp.com',
-  projectId: 'REPLACE_ME',
-  appId: 'REPLACE_ME'
+  apiKey: 'AIzaSyBgrhvvz2ZEgUQruCiY4HNgg7AziWEGyfU',
+  authDomain: 'lm-system-1f7db.firebaseapp.com',
+  projectId: 'lm-system-1f7db',
+  appId: '1:476670666393:web:7c0a518c10d2928d843a08'
 };
 
 const { db } = createFirebaseClients(firebaseConfig);
