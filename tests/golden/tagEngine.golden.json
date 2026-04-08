@@ -1,0 +1,152 @@
+[
+  {
+    "name": "gera_tags_baixa_adesao",
+    "input": {
+      "lmScore": 38,
+      "dimensions": {
+        "adherence": 30,
+        "nutrition": 45,
+        "training": 50,
+        "recovery": 60,
+        "clinical": 15,
+        "behavior": 32
+      },
+      "profile": {
+        "strengthFrequency": 2,
+        "aerobicFrequency": 0,
+        "nutritionOffDays": 4
+      }
+    },
+    "expected": {
+      "mustInclude": [
+        "low_adherence",
+        "high_drop_risk",
+        "needs_accountability"
+      ],
+      "mustNotInclude": [
+        "self_driven",
+        "digital_product_fit"
+      ],
+      "maxTags": 5
+    }
+  },
+  {
+    "name": "gera_tags_produto_digital",
+    "input": {
+      "lmScore": 76,
+      "dimensions": {
+        "adherence": 82,
+        "nutrition": 74,
+        "training": 72,
+        "recovery": 68,
+        "clinical": 10,
+        "behavior": 80
+      },
+      "profile": {
+        "strengthFrequency": 4,
+        "aerobicFrequency": 2,
+        "nutritionOffDays": 1
+      }
+    },
+    "expected": {
+      "mustInclude": [
+        "self_driven",
+        "digital_product_fit"
+      ],
+      "mustNotInclude": [
+        "low_adherence",
+        "high_drop_risk"
+      ],
+      "maxTags": 5
+    }
+  },
+  {
+    "name": "gera_tags_clinicas",
+    "input": {
+      "lmScore": 44,
+      "dimensions": {
+        "adherence": 58,
+        "nutrition": 50,
+        "training": 46,
+        "recovery": 41,
+        "clinical": 84,
+        "behavior": 52
+      },
+      "profile": {
+        "strengthFrequency": 3,
+        "aerobicFrequency": 1,
+        "nutritionOffDays": 2,
+        "pain": true
+      }
+    },
+    "expected": {
+      "mustInclude": [
+        "high_clinical_risk",
+        "pain_or_injury"
+      ],
+      "mustNotInclude": [
+        "digital_product_fit"
+      ],
+      "maxTags": 5
+    }
+  },
+  {
+    "name": "gera_tags_inconsistencia_nutricional",
+    "input": {
+      "lmScore": 49,
+      "dimensions": {
+        "adherence": 48,
+        "nutrition": 35,
+        "training": 54,
+        "recovery": 58,
+        "clinical": 18,
+        "behavior": 45
+      },
+      "profile": {
+        "strengthFrequency": 3,
+        "aerobicFrequency": 1,
+        "nutritionOffDays": 5
+      }
+    },
+    "expected": {
+      "mustInclude": [
+        "inconsistency_pattern",
+        "high_off_diet_days"
+      ],
+      "mustNotInclude": [
+        "self_driven"
+      ],
+      "maxTags": 5
+    }
+  },
+  {
+    "name": "gera_tags_sem_musculacao_sem_aerobio",
+    "input": {
+      "lmScore": 33,
+      "dimensions": {
+        "adherence": 43,
+        "nutrition": 40,
+        "training": 25,
+        "recovery": 51,
+        "clinical": 20,
+        "behavior": 40
+      },
+      "profile": {
+        "strengthFrequency": 0,
+        "aerobicFrequency": 0,
+        "nutritionOffDays": 3
+      }
+    },
+    "expected": {
+      "mustInclude": [
+        "no_strength_training",
+        "no_aerobic_training",
+        "low_training_frequency"
+      ],
+      "mustNotInclude": [
+        "ready_for_consulting"
+      ],
+      "maxTags": 5
+    }
+  }
+]
