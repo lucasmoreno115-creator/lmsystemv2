@@ -6,10 +6,22 @@ service cloud.firestore {
       allow create: if isValidLeadCreate();
       allow update, delete: if false;
 
+      function isValidPriority(priority) {
+        return priority == null
+          || (priority is map
+            && priority.keys().hasOnly(['score', 'level', 'closeProbability', 'contactAction', 'reasons', 'breakdown'])
+            && (!('score' in priority) || priority.score == null || priority.score is number)
+            && (!('level' in priority) || priority.level == null || priority.level is string)
+            && (!('closeProbability' in priority) || priority.closeProbability == null || priority.closeProbability is string)
+            && (!('contactAction' in priority) || priority.contactAction == null || priority.contactAction is string)
+            && (!('reasons' in priority) || priority.reasons is list)
+            && (!('breakdown' in priority) || priority.breakdown == null || priority.breakdown is map));
+      }
+
       function isValidLeadCreate() {
         return request.resource.data.keys().hasOnly([
             'name', 'email', 'whatsapp', 'goal', 'lmScore', 'classification', 'tags',
-            'leadValue', 'recommendedOffer', 'dimensions', 'coachSummary', 'status', 'createdAt'
+            'leadValue', 'recommendedOffer', 'dimensions', 'coachSummary', 'priority', 'status', 'createdAt'
           ])
           && request.resource.data.name is string
           && request.resource.data.email is string
@@ -25,6 +37,7 @@ service cloud.firestore {
           && request.resource.data.recommendedOffer in ['produto_digital', 'consultoria_online', 'presencial']
           && request.resource.data.dimensions is map
           && request.resource.data.coachSummary is string
+          && (!('priority' in request.resource.data) || isValidPriority(request.resource.data.priority))
           && request.resource.data.status == 'NEW'
           && request.resource.data.createdAt == request.time;
       }
