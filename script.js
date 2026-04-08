@@ -6,10 +6,12 @@ import { createSubmitGuard } from './src/ui/submitGuards.js';
 import { renderResult } from './src/ui/resultRenderer.js';
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyBgrhvvz2ZEgUQruCiY4HNgg7AziWEGyfU',
-  authDomain: 'lm-system-1f7db.firebaseapp.com',
-  projectId: 'lm-system-1f7db',
-  appId: '1:476670666393:web:7c0a518c10d2928d843a08'
+  apiKey: "AIzaSyBgrhvvz2ZEgUQruCiY4HNgg7AziWEGyfU",
+  authDomain: "lm-system-1f7db.firebaseapp.com",
+  projectId: "lm-system-1f7db",
+  storageBucket: "lm-system-1f7db.firebasestorage.app",
+  messagingSenderId: "476670666393",
+  appId: "1:476670666393:web:7c0a518c10d2928d843a08"
 };
 
 const { db } = createFirebaseClients(firebaseConfig);
