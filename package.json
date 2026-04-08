@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "test": "node --test tests/*.test.js"
+    "test": "npm run test:golden",
+    "test:golden:tags": "node tests/golden/tagEngine.test.js",
+    "test:golden:priority": "node tests/golden/leadPriority.test.js",
+    "test:golden": "npm run test:golden:tags && npm run test:golden:priority"
   }
 }
