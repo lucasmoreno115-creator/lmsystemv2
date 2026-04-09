@@ -1,13 +1,58 @@
 import { USER_MESSAGE_48H } from '../utils/strings.js';
+import { buildStrategicResult } from '../core/lmStrategicResultResolver.js';
+
+function renderOptionalRange(label) {
+  if (!label) return '';
+  return `<p class="result-note">${label}</p>`;
+}
 
 export function renderResult(container, result) {
+  const strategic = buildStrategicResult({
+    lmScore: result.lmScore,
+    classification: result.classification,
+    goal: result.goal,
+    profile: result.profile,
+    ctaHref: result.ctaHref,
+    ctaButtonLabel: result.ctaButtonLabel
+  });
+
   container.classList.remove('hidden');
   container.innerHTML = `
     <div class="result">
-      <h2>Resultado da Triagem</h2>
-      <p class="score">${result.lmScore}</p>
-      <p><strong>Classificação:</strong> ${result.classification}</p>
-      <p>${USER_MESSAGE_48H}</p>
+      <section class="result-block result-score-block">
+        <h2>${strategic.scoreMeaningTitle}</h2>
+        <p class="score">${result.lmScore}/100</p>
+        <p class="result-note"><strong>Classificação:</strong> ${result.classification}</p>
+        <p>${strategic.scoreMeaningText}</p>
+      </section>
+
+      <section class="result-block">
+        <h3>${strategic.startingPointTitle}</h3>
+        <p>${strategic.startingPointText}</p>
+      </section>
+
+      <section class="result-block">
+        <h3>${strategic.nutritionGuidance.title}</h3>
+        <p>${strategic.nutritionGuidance.text}</p>
+        ${renderOptionalRange(strategic.nutritionGuidance.kcalRangeLabel)}
+        ${renderOptionalRange(strategic.nutritionGuidance.proteinRangeLabel)}
+      </section>
+
+      <section class="result-block">
+        <h3>${strategic.trainingGuidance.title}</h3>
+        <p>${strategic.trainingGuidance.text}</p>
+        <div class="result-chips">
+          <span class="result-chip">${strategic.trainingGuidance.strengthFrequencyLabel}</span>
+          <span class="result-chip">${strategic.trainingGuidance.cardioFrequencyLabel}</span>
+        </div>
+      </section>
+
+      <section class="result-block result-cta">
+        <h3>${strategic.cta.title}</h3>
+        <p>${strategic.cta.text}</p>
+        <a class="result-cta-button" href="${strategic.cta.href}">${strategic.cta.buttonLabel}</a>
+        <p class="result-disclaimer">${USER_MESSAGE_48H}</p>
+      </section>
     </div>
   `;
 }

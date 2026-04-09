@@ -77,6 +77,9 @@ export async function processLeadSubmission({ formElement, db }) {
   return {
     lmScore: scoreResult.lmScore,
     classification,
+    goal: userInput.goal,
+    profile: scoreResult.dimensions,
+    ctaHref: './produtos.html',
     leadPayload
   };
 }
