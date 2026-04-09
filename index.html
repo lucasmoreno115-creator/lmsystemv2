@@ -21,38 +21,95 @@
             <label>Nome<input type="text" name="name" required /></label>
             <label>E-mail<input type="email" name="email" required /></label>
             <label>WhatsApp<input type="text" name="whatsapp" required /></label>
-            <label>Objetivo
+            <label>Qual é o seu principal objetivo neste momento?
               <select name="goal" required>
                 <option value="">Selecione</option>
                 <option value="emagrecimento">Emagrecimento</option>
-                <option value="hipertrofia">Hipertrofia</option>
-                <option value="performance">Performance</option>
-                <option value="saude">Saúde</option>
+                <option value="definicao_muscular">Definição muscular</option>
+                <option value="ganho_massa_muscular">Ganho de massa muscular</option>
+                <option value="saude_condicionamento">Melhorar saúde e condicionamento</option>
+                <option value="outro">Outro</option>
               </select>
             </label>
-            <label>Frequência de treino (1-5)
-              <input type="number" min="1" max="5" name="trainingFrequency" required />
+            <label>Com que frequência você treina hoje?
+              <select name="trainingFrequency" required>
+                <option value="">Selecione</option>
+                <option value="1">Não treino atualmente</option>
+                <option value="2">1–2x por semana</option>
+                <option value="3">3x por semana</option>
+                <option value="4">4–5x por semana</option>
+                <option value="5">6x ou mais por semana</option>
+              </select>
             </label>
-            <label>Experiência de treino (1-5)
-              <input type="number" min="1" max="5" name="trainingExperience" required />
+            <label>Qual é o seu nível de experiência com treino?
+              <select name="trainingExperience" required>
+                <option value="">Selecione</option>
+                <option value="1">Nunca treinei ou estou começando</option>
+                <option value="2">Já treinei, mas sem constância</option>
+                <option value="3">Treino há algum tempo, ainda aprendendo</option>
+                <option value="4">Treino com regularidade e boa técnica</option>
+                <option value="5">Treino avançado, com boa consciência corporal</option>
+              </select>
             </label>
-            <label>Adesão alimentar (1-5)
-              <input type="number" min="1" max="5" name="foodAdherence" required />
+            <label>Como está sua alimentação no dia a dia?
+              <select name="foodAdherence" required>
+                <option value="">Selecione</option>
+                <option value="1">Sem rotina, como no automático</option>
+                <option value="2">Tento melhorar, mas não consigo manter</option>
+                <option value="3">Consigo seguir em alguns dias</option>
+                <option value="4">Sigo bem na maior parte do tempo</option>
+                <option value="5">Tenho rotina alimentar bem estruturada</option>
+              </select>
             </label>
-            <label>Qualidade do sono (1-5)
-              <input type="number" min="1" max="5" name="sleepQuality" required />
+            <label>Como está seu sono atualmente?
+              <select name="sleepQuality" required>
+                <option value="">Selecione</option>
+                <option value="1">Durmo mal e acordo cansado</option>
+                <option value="2">Sono irregular, acordo sem energia</option>
+                <option value="3">Sono razoável, varia bastante</option>
+                <option value="4">Durmo bem na maioria dos dias</option>
+                <option value="5">Sono de qualidade e recuperação boa</option>
+              </select>
             </label>
-            <label>Nível de estresse (1-5)
-              <input type="number" min="1" max="5" name="stressLevel" required />
+            <label>Como está seu nível de estresse hoje?
+              <select name="stressLevel" required>
+                <option value="">Selecione</option>
+                <option value="1">Muito alto, difícil de controlar</option>
+                <option value="2">Alto na maior parte do tempo</option>
+                <option value="3">Moderado</option>
+                <option value="4">Baixo na maioria dos dias</option>
+                <option value="5">Muito baixo, rotina tranquila</option>
+              </select>
             </label>
-            <label>Dor/lesão ativa (1-5)
-              <input type="number" min="1" max="5" name="painInjury" required />
+            <label>Você sente dores ou limitações físicas?
+              <select name="painInjury" required>
+                <option value="">Selecione</option>
+                <option value="1">Sem dor ou limitações</option>
+                <option value="2">Raramente sinto dor</option>
+                <option value="3">Pequenas dores, mas consigo treinar</option>
+                <option value="4">Dor ocasional que limita exercícios</option>
+                <option value="5">Dor frequente que atrapalha treinar</option>
+              </select>
             </label>
-            <label>Histórico de consistência (1-5)
-              <input type="number" min="1" max="5" name="consistencyHistory" required />
+            <label>Como tem sido sua consistência nos últimos meses?
+              <select name="consistencyHistory" required>
+                <option value="">Selecione</option>
+                <option value="1">Não consigo manter rotina</option>
+                <option value="2">Começo, mas paro rápido</option>
+                <option value="3">Oscilo bastante</option>
+                <option value="4">Consigo manter na maior parte do tempo</option>
+                <option value="5">Sou consistente há meses</option>
+              </select>
             </label>
-            <label>Nível de motivação (1-5)
-              <input type="number" min="1" max="5" name="motivationLevel" required />
+            <label>Como está sua motivação para mudar hoje?
+              <select name="motivationLevel" required>
+                <option value="">Selecione</option>
+                <option value="1">Muito baixa</option>
+                <option value="2">Baixa</option>
+                <option value="3">Média</option>
+                <option value="4">Alta</option>
+                <option value="5">Muito alta</option>
+              </select>
             </label>
           </div>
 
