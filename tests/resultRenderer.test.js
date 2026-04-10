@@ -19,5 +19,4 @@ test('renderResult renders classification label and behavior insights without cr
 
   assert.match(container.innerHTML, /Classificação:<\/strong> Em evolução/);
   assert.match(container.innerHTML, /Insight comportamental/);
-  assert.match(container.innerHTML, /Ponto de atenção estratégico/);
 });

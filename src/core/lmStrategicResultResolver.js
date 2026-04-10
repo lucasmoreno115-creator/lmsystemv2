@@ -4,13 +4,6 @@ function normalizeGoal(goal) {
   return 'health';
 }
 
-function resolveScoreRange(lmScore) {
-  if (lmScore <= 39) return 'low';
-  if (lmScore <= 59) return 'medium';
-  if (lmScore <= 79) return 'good';
-  return 'high';
-}
-
 function resolveClassificationLabel(lmScore) {
   if (lmScore <= 39) return 'Base em construção';
   if (lmScore <= 59) return 'Em evolução';
@@ -78,52 +71,42 @@ function resolveTrainingText(normalizedGoal) {
   return 'Para esse perfil, a melhor estratégia tende a combinar musculação e cardio de forma equilibrada, com foco em constância, disposição e melhora da saúde geral.';
 }
 
-function resolveBehaviorInsights(tags, excludedKeys = []) {
+function resolveBehaviorInsights(tags) {
   const safeTags = Array.isArray(tags) ? tags : [];
-  const blocked = Array.isArray(excludedKeys) ? excludedKeys : [];
   const insights = [];
-  const pushIf = (key, condition, message) => {
-    if (blocked.includes(key)) return;
+  const pushIf = (condition, message) => {
     if (condition && insights.length < 2 && !insights.includes(message)) insights.push(message);
   };
 
   pushIf(
-    'high_motivation_low_consistency',
     safeTags.includes('high_motivation_low_consistency'),
     'Você já tem vontade de fazer dar certo. O próximo passo é transformar essa motivação em constância ao longo da semana.'
   );
   pushIf(
-    'low_consistency',
     safeTags.includes('low_consistency'),
     'O principal ajuste para você agora é criar uma rotina que funcione na prática, inclusive nos dias em que a motivação estiver mais baixa.'
   );
   pushIf(
-    'needs_accountability',
     safeTags.includes('needs_accountability'),
     'Ter uma estrutura clara e acompanhamento pode ser o que falta para transformar intenção em resultado.'
   );
   pushIf(
-    'high_stress',
     safeTags.includes('high_stress'),
     'Sua estratégia precisa respeitar sua rotina atual. Quanto mais a estratégia encaixar na sua realidade, maior a chance de resultado.'
   );
   pushIf(
-    'recovery',
     safeTags.includes('poor_sleep_quality') || safeTags.includes('low_recovery'),
     'Melhorar sua recuperação pode acelerar seu resultado mais do que simplesmente aumentar o volume de treino.'
   );
   pushIf(
-    'pain_clinical',
     safeTags.includes('pain_limitation') || safeTags.includes('clinical_attention'),
     'Antes de intensificar, o mais importante agora é ajustar sua execução e respeitar seu momento atual.'
   );
   pushIf(
-    'low_nutrition_adherence',
     safeTags.includes('low_nutrition_adherence'),
     'Mais do que buscar perfeição, seu foco agora deve ser tornar sua alimentação mais previsível ao longo da semana.'
   );
   pushIf(
-    'good_readiness',
     safeTags.includes('good_readiness'),
     'Você já tem uma base favorável para evoluir. Agora o ganho tende a vir de uma estratégia melhor organizada.'
   );
@@ -131,148 +114,29 @@ function resolveBehaviorInsights(tags, excludedKeys = []) {
   return insights;
 }
 
-function resolveTensionText({ scoreRange, tags }) {
+function resolveTension({ lmScore, tags }) {
   const safeTags = Array.isArray(tags) ? tags : [];
-  if (safeTags.includes('pain_limitation') || safeTags.includes('clinical_attention')) {
-    return {
-      key: 'pain_clinical',
-      text: 'Se você tentar intensificar sem ajustar a base primeiro, a tendência é sentir mais dificuldade para sustentar progresso com segurança.'
-    };
+  if (safeTags.includes('high_stress') || safeTags.includes('needs_accountability')) {
+    return 'Sem uma estratégia mais clara, fica muito mais difícil sustentar resultado ao longo do tempo.';
   }
-  if (safeTags.includes('high_stress')) {
-    return {
-      key: 'high_stress',
-      text: 'Quando a estratégia não respeita sua rotina atual, a chance de abandono aumenta. Por isso, o plano certo precisa ser compatível com a sua realidade.'
-    };
+  if (safeTags.includes('low_consistency') || safeTags.includes('high_motivation_low_consistency')) {
+    return 'Quando a rotina não está bem organizada, o esforço nem sempre vira resultado.';
   }
-  if (safeTags.includes('poor_sleep_quality') || safeTags.includes('low_recovery')) {
-    return {
-      key: 'recovery',
-      text: 'Mesmo treinando e tentando se alimentar melhor, sua evolução pode ficar limitada se sua recuperação continuar desorganizada.'
-    };
+  if (lmScore <= 59) {
+    return 'Do jeito que está hoje, você até pode evoluir, mas provavelmente mais devagar do que poderia.';
   }
-  if (safeTags.includes('high_motivation_low_consistency')) {
-    return {
-      key: 'high_motivation_low_consistency',
-      text: 'Você já tem vontade de fazer dar certo. O que falta agora é uma estrutura que ajude essa motivação a se manter na prática.'
-    };
-  }
-  if (safeTags.includes('low_consistency')) {
-    return {
-      key: 'low_consistency',
-      text: 'Sem uma rotina que encaixe de verdade na sua semana, fica muito mais difícil transformar esforço em resultado sustentável.'
-    };
-  }
-  if (safeTags.includes('needs_accountability')) {
-    return {
-      key: 'needs_accountability',
-      text: 'Quando tudo depende apenas de tentativa e motivação, fica mais difícil manter ritmo. Ter uma estrutura clara pode encurtar esse caminho.'
-    };
-  }
-  if (safeTags.includes('good_readiness')) {
-    return {
-      key: 'good_readiness',
-      text: 'Você já tem uma base favorável. Agora, sem uma estratégia mais bem ajustada, parte do seu potencial pode continuar sendo desperdiçada.'
-    };
-  }
-
-  if (scoreRange === 'low') {
-    return {
-      key: null,
-      text: 'Do jeito que está hoje, fica muito mais difícil sair do lugar com consistência. Com uma estratégia mais clara, esse processo tende a ficar mais simples e mais possível de manter.'
-    };
-  }
-  if (scoreRange === 'medium') {
-    return {
-      key: null,
-      text: 'Você já tem pontos positivos, mas sem uma estratégia melhor organizada, sua evolução tende a acontecer de forma mais lenta e instável.'
-    };
-  }
-  if (scoreRange === 'good') {
-    return {
-      key: null,
-      text: 'Você já está em um bom caminho, mas sem ajustes mais estratégicos, é provável que continue evoluindo abaixo do que poderia.'
-    };
-  }
-  return {
-    key: null,
-    text: 'Sua base já é boa. Agora, o que faz diferença não é fazer mais, e sim ajustar melhor para continuar evoluindo sem estagnar.'
-  };
+  return 'Com pequenos ajustes de estratégia, seu esforço tende a render mais resultado com menos desgaste.';
 }
 
-function resolveCtaBlock({ scoreRange, tags, ctaHref }) {
+function resolveCtaLabel({ lmScore, normalizedGoal, tags }) {
   const safeTags = Array.isArray(tags) ? tags : [];
-  if (safeTags.includes('pain_limitation') || safeTags.includes('clinical_attention')) {
-    return {
-      title: 'Seu próximo passo é ajustar com mais segurança',
-      text: 'Eu posso te ajudar a organizar uma estratégia mais segura, respeitando seu momento atual e seu objetivo.',
-      buttonLabel: 'Quero uma estratégia mais segura',
-      href: ctaHref || '#'
-    };
-  }
-  if (safeTags.includes('high_motivation_low_consistency')) {
-    return {
-      title: 'Seu próximo passo é transformar motivação em constância',
-      text: 'Com a estratégia certa, fica muito mais fácil manter o ritmo e colocar isso em prática de forma consistente.',
-      buttonLabel: 'Quero manter isso na prática',
-      href: ctaHref || '#'
-    };
-  }
-  if (safeTags.includes('needs_accountability')) {
-    return {
-      title: 'Seu próximo passo é ter uma estrutura clara',
-      text: 'Com uma estratégia mais organizada e acompanhamento certo, fica muito mais fácil transformar intenção em resultado.',
-      buttonLabel: 'Quero isso organizado',
-      href: ctaHref || '#'
-    };
-  }
-  if (safeTags.includes('low_consistency')) {
-    return {
-      title: 'Seu próximo passo é criar uma rotina possível de manter',
-      text: 'Eu posso te ajudar a organizar uma estratégia mais simples, prática e compatível com a sua rotina.',
-      buttonLabel: 'Quero mais consistência',
-      href: ctaHref || '#'
-    };
-  }
-  if (safeTags.includes('good_readiness')) {
-    return {
-      title: 'Seu próximo passo é aproveitar melhor seu potencial',
-      text: 'Você já tem uma base favorável. Agora vale organizar melhor sua estratégia para evoluir mais com clareza.',
-      buttonLabel: 'Quero otimizar meu resultado',
-      href: ctaHref || '#'
-    };
-  }
-
-  if (scoreRange === 'low') {
-    return {
-      title: 'Seu próximo passo é organizar a base',
-      text: 'Eu posso te entregar uma estratégia mais simples, clara e aplicável para começar do jeito certo.',
-      buttonLabel: 'Quero começar do jeito certo',
-      href: ctaHref || '#'
-    };
-  }
-  if (scoreRange === 'medium') {
-    return {
-      title: 'Seu próximo passo é ganhar direção',
-      text: 'Com a estratégia certa, você consegue transformar esforço em resultado de forma muito mais consistente.',
-      buttonLabel: 'Quero acelerar meus resultados',
-      href: ctaHref || '#'
-    };
-  }
-  if (scoreRange === 'good') {
-    return {
-      title: 'Seu próximo passo é otimizar o que já tem',
-      text: 'Você já tem uma boa base. Agora vale organizar melhor sua estratégia para evoluir mais com o mesmo esforço.',
-      buttonLabel: 'Quero otimizar meu resultado',
-      href: ctaHref || '#'
-    };
-  }
-  return {
-    title: 'Seu próximo passo é refinar sua estratégia',
-    text: 'Seu maior ganho agora tende a vir de ajustes mais finos, com um plano melhor organizado para o seu objetivo.',
-    buttonLabel: 'Quero refinar minha estratégia',
-    href: ctaHref || '#'
-  };
+  if (safeTags.includes('needs_accountability')) return 'Quero estrutura e acompanhamento';
+  if (safeTags.includes('good_readiness')) return 'Quero otimizar minha estratégia';
+  if (lmScore >= 80) return 'Quero refinar minha estratégia';
+  if (lmScore <= 39 && normalizedGoal === 'fat_loss') return 'Quero começar do jeito certo';
+  if (lmScore <= 59 && normalizedGoal === 'fat_loss') return 'Quero acelerar meus resultados';
+  if (lmScore >= 60 && lmScore <= 79 && normalizedGoal === 'muscle_gain') return 'Quero extrair mais resultado';
+  return 'Quero aplicar essa estratégia';
 }
 
 export function buildStrategicResult({
@@ -286,23 +150,19 @@ export function buildStrategicResult({
   ctaButtonLabel
 }) {
   const normalizedGoal = normalizeGoal(goal);
-  const scoreRange = resolveScoreRange(lmScore);
   const uiClassificationLabel = classificationLabel || resolveClassificationLabel(lmScore);
-  const tension = resolveTensionText({ scoreRange, goal: normalizedGoal, tags });
-  const behaviorInsights = resolveBehaviorInsights(tags, tension.key ? [tension.key] : []);
+  const behaviorInsights = resolveBehaviorInsights(tags);
   const diagnosis = resolveDiagnosisText(lmScore);
   const direction = resolveDirectionText({ lmScore, normalizedGoal, classification, profile });
-  const cta = resolveCtaBlock({ scoreRange, goal: normalizedGoal, tags, ctaHref });
-  const resolvedCtaLabel = ctaButtonLabel || cta.buttonLabel;
+  const tension = resolveTension({ lmScore, tags });
+  const resolvedCtaLabel = ctaButtonLabel || resolveCtaLabel({ lmScore, normalizedGoal, tags });
 
   return {
     classificationLabel: uiClassificationLabel,
     diagnosis,
     direction,
     behaviorInsights,
-    tension: tension.text,
-    tensionTitle: 'Ponto de atenção estratégico',
-    tensionText: tension.text,
+    tension,
     ctaLabel: resolvedCtaLabel,
     scoreMeaningTitle: 'Seu LM Score',
     scoreMeaningText: diagnosis,
@@ -321,8 +181,10 @@ export function buildStrategicResult({
       cardioFrequencyLabel: normalizedGoal === 'muscle_gain' ? 'Cardio: 2–3x/semana' : 'Cardio: 2–4x/semana'
     },
     cta: {
-      ...cta,
-      buttonLabel: resolvedCtaLabel
+      title: 'Quer tudo isso organizado para já colocar em prática?',
+      text: `${tension} Eu posso te entregar essa estratégia de forma estruturada, com treino, direcionamento alimentar e um plano claro para o seu objetivo.`,
+      buttonLabel: resolvedCtaLabel,
+      href: ctaHref || '#'
     }
   };
 }

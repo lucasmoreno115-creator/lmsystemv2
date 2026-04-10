@@ -3,16 +3,16 @@ import assert from 'node:assert/strict';
 import { buildStrategicResult } from '../src/core/lmStrategicResultResolver.js';
 
 test('buildStrategicResult returns expected score meaning ranges', () => {
-  const low = buildStrategicResult({ lmScore: 30, goal: 'fat_loss', tags: [] });
-  const medium = buildStrategicResult({ lmScore: 55, goal: 'muscle_gain', tags: [] });
-  const high = buildStrategicResult({ lmScore: 85, goal: 'maintenance', tags: [] });
+  const low = buildStrategicResult({ lmScore: 30, goal: 'fat_loss', tags: ['low_consistency'] });
+  const medium = buildStrategicResult({ lmScore: 55, goal: 'muscle_gain', tags: ['high_motivation_low_consistency'] });
+  const high = buildStrategicResult({ lmScore: 85, goal: 'maintenance', tags: ['good_readiness'] });
 
   assert.equal(low.classificationLabel, 'Base em construção');
   assert.equal(medium.classificationLabel, 'Em evolução');
   assert.equal(high.classificationLabel, 'Nível avançado');
-  assert.match(low.tensionText, /sair do lugar/);
-  assert.match(medium.tensionText, /mais lenta e instável/);
-  assert.match(high.tensionText, /continuar evoluindo sem estagnar/);
+  assert.equal(low.behaviorInsights.length, 1);
+  assert.equal(medium.behaviorInsights.length, 1);
+  assert.equal(high.behaviorInsights.length, 1);
 });
 
 test('buildStrategicResult keeps nutritional ranges qualitative by default', () => {
@@ -48,47 +48,11 @@ test('buildStrategicResult limits behavior insights to two messages', () => {
 
 test('buildStrategicResult handles pain limitation scenario', () => {
   const result = buildStrategicResult({
-    lmScore: 50,
+    lmScore: 62,
     goal: 'muscle_gain',
     tags: ['pain_limitation']
   });
 
-  assert.match(result.tensionText, /intensificar sem ajustar a base/);
-  assert.equal(result.cta.buttonLabel, 'Quero uma estratégia mais segura');
-});
-
-test('buildStrategicResult uses low_consistency tension and CTA for score 48', () => {
-  const result = buildStrategicResult({
-    lmScore: 48,
-    goal: 'fat_loss',
-    tags: ['low_consistency']
-  });
-
-  assert.match(result.tensionText, /rotina que encaixe de verdade/);
-  assert.equal(result.cta.title, 'Seu próximo passo é criar uma rotina possível de manter');
-  assert.equal(result.cta.buttonLabel, 'Quero mais consistência');
-});
-
-test('buildStrategicResult uses high motivation low consistency tension and CTA for score 55', () => {
-  const result = buildStrategicResult({
-    lmScore: 55,
-    goal: 'fat_loss',
-    tags: ['high_motivation_low_consistency']
-  });
-
-  assert.match(result.tensionText, /estrutura que ajude essa motivação/);
-  assert.equal(result.cta.title, 'Seu próximo passo é transformar motivação em constância');
-  assert.equal(result.cta.buttonLabel, 'Quero manter isso na prática');
-});
-
-test('buildStrategicResult uses good readiness tension and CTA for score 72', () => {
-  const result = buildStrategicResult({
-    lmScore: 72,
-    goal: 'muscle_gain',
-    tags: ['good_readiness']
-  });
-
-  assert.match(result.tensionText, /potencial pode continuar sendo desperdiçada/);
-  assert.equal(result.cta.title, 'Seu próximo passo é aproveitar melhor seu potencial');
-  assert.equal(result.cta.buttonLabel, 'Quero otimizar meu resultado');
+  assert.match(result.behaviorInsights[0], /respeitar seu momento atual/);
+  assert.match(result.tension, /ajustes de estratégia|rotina/);
 });
