@@ -63,6 +63,11 @@ export function renderResult(container, result) {
         </div>
       </section>
 
+      <section class="result-block">
+        <h3>${strategic.tensionTitle || 'Ponto de atenção estratégico'}</h3>
+        <p>${strategic.tensionText || strategic.tension}</p>
+      </section>
+
       <section class="result-block result-cta">
         <h3>${strategic.cta.title}</h3>
         <p>${strategic.cta.text}</p>
