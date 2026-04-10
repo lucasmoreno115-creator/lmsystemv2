@@ -6,11 +6,26 @@ function renderOptionalRange(label) {
   return `<p class="result-note">${label}</p>`;
 }
 
+function renderBehaviorInsights(insights) {
+  if (!Array.isArray(insights) || insights.length === 0) return '';
+
+  return `
+    <section class="result-block">
+      <h3>Insight comportamental</h3>
+      <ul class="result-list">
+        ${insights.map((insight) => `<li>${insight}</li>`).join('')}
+      </ul>
+    </section>
+  `;
+}
+
 export function renderResult(container, result) {
   const strategic = buildStrategicResult({
     lmScore: result.lmScore,
     classification: result.classification,
+    classificationLabel: result.classificationLabel,
     goal: result.goal,
+    tags: result.tags || result.leadPayload?.tags,
     profile: result.profile,
     ctaHref: result.ctaHref,
     ctaButtonLabel: result.ctaButtonLabel
@@ -22,7 +37,7 @@ export function renderResult(container, result) {
       <section class="result-block result-score-block">
         <h2>${strategic.scoreMeaningTitle}</h2>
         <p class="score">${result.lmScore}/100</p>
-        <p class="result-note"><strong>Classificação:</strong> ${result.classification}</p>
+        <p class="result-note"><strong>Classificação:</strong> ${strategic.classificationLabel}</p>
         <p>${strategic.scoreMeaningText}</p>
       </section>
 
@@ -30,6 +45,7 @@ export function renderResult(container, result) {
         <h3>${strategic.startingPointTitle}</h3>
         <p>${strategic.startingPointText}</p>
       </section>
+      ${renderBehaviorInsights(strategic.behaviorInsights)}
 
       <section class="result-block">
         <h3>${strategic.nutritionGuidance.title}</h3>
