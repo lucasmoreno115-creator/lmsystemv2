@@ -80,7 +80,7 @@ export async function processLeadSubmission({ formElement, db }) {
     tags,
     goal: userInput.goal,
     profile: scoreResult.dimensions,
-    ctaHref: './produtos.html',
+    ctaHref: './planos.html',
     leadPayload
   };
 }

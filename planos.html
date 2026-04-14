@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LM System | Planos</title>
+    <link rel="icon" type="image/png" href="./favicon.png" />
+    <link rel="stylesheet" href="./style.css" />
+    <style>
+      .plans-header {
+        margin-top: 8px;
+      }
+      .plans-header h1 {
+        margin: 4px 0 8px;
+        font-size: 1.5rem;
+        line-height: 1.25;
+      }
+      .plans-header p {
+        margin: 0;
+        color: var(--muted);
+      }
+      .plans-grid {
+        display: grid;
+        gap: 12px;
+        margin-top: 16px;
+      }
+      .plan-card {
+        background: #111111;
+        border: 1px solid #2d2d2d;
+        border-radius: 14px;
+        padding: 14px;
+      }
+      .plan-card.featured {
+        border-color: #5e4f22;
+        background: linear-gradient(180deg, #1a1710 0%, #111111 100%);
+        box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.2);
+      }
+      .plan-label {
+        display: inline-block;
+        color: #0f0f0f;
+        background: #464646;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 0.78rem;
+        font-weight: 700;
+      }
+      .plan-card.featured .plan-label {
+        background: var(--accent);
+      }
+      .plan-name {
+        margin: 10px 0 6px;
+        font-size: 1.2rem;
+      }
+      .plan-copy,
+      .plan-final {
+        color: #d6d6d6;
+        margin: 0;
+        line-height: 1.45;
+      }
+      .plan-list {
+        margin: 12px 0;
+        padding-left: 18px;
+        color: #ececec;
+        display: grid;
+        gap: 6px;
+      }
+      .plan-button {
+        margin-top: 12px;
+        display: block;
+        text-decoration: none;
+        text-align: center;
+        background: #343434;
+        color: #ffffff;
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-weight: 700;
+      }
+      .plan-card.featured .plan-button {
+        background: var(--accent);
+        color: #0f0f0f;
+      }
+      .final-message {
+        text-align: center;
+        margin-top: 18px;
+        color: #f2f2f2;
+        font-weight: 600;
+      }
+      @media (min-width: 860px) {
+        .plans-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="plans-header">
+        <p class="eyebrow">LM System</p>
+        <h1>Escolha o formato ideal para transformar seu diagnóstico em um plano claro de ação</h1>
+        <p>Treino, estratégia e acompanhamento no nível certo para o seu momento.</p>
+      </header>
+
+      <section class="plans-grid" aria-label="Planos LM System">
+        <article class="plan-card">
+          <span class="plan-label">Plano inicial</span>
+          <h2 class="plan-name">LM Start 30</h2>
+          <p class="plan-copy">Para quem quer começar certo com um plano personalizado e direto ao ponto</p>
+          <ul class="plan-list">
+            <li>Treino personalizado</li>
+            <li>Plano alimentar individualizado</li>
+            <li>Estratégia inicial para 30 dias</li>
+            <li>1 sessão de orientação</li>
+          </ul>
+          <p class="plan-final">Ideal para você se: quer direção, mas consegue executar sozinho.</p>
+          <a class="plan-button" href="#">Quero meu plano inicial</a>
+        </article>
+
+        <article class="plan-card featured">
+          <span class="plan-label">Mais recomendado</span>
+          <h2 class="plan-name">LM Premium Coach</h2>
+          <p class="plan-copy">Para quem quer acompanhamento, ajustes e mais consistência no processo</p>
+          <ul class="plan-list">
+            <li>Tudo do plano inicial</li>
+            <li>Acompanhamento semanal</li>
+            <li>Ajustes contínuos</li>
+            <li>Suporte direto</li>
+          </ul>
+          <p class="plan-final">Ideal para você se: já sabe que sozinho começa bem, mas não mantém.</p>
+          <a class="plan-button" href="#">Quero acompanhamento completo</a>
+        </article>
+
+        <article class="plan-card">
+          <span class="plan-label">Correção técnica ao vivo</span>
+          <h2 class="plan-name">LM Presencial Pro</h2>
+          <p class="plan-copy">Para quem quer correção técnica ao vivo e mais segurança na execução</p>
+          <ul class="plan-list">
+            <li>Avaliação física e postural</li>
+            <li>Correção de execução</li>
+            <li>Sessão guiada presencial</li>
+            <li>Ajustes técnicos imediatos</li>
+          </ul>
+          <p class="plan-final">Ideal para você se: quer treinar com mais precisão, segurança e acompanhamento ao vivo.</p>
+          <a class="plan-button" href="#">Quero agendar avaliação</a>
+        </article>
+      </section>
+
+      <p class="final-message">Você não precisa de mais informação. Precisa do próximo passo certo.</p>
+    </main>
+  </body>
+</html>
