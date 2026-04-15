@@ -18,6 +18,17 @@ service cloud.firestore {
             && (!('breakdown' in priority) || priority.breakdown == null || priority.breakdown is map));
       }
 
+      function hasValidDimensions(dimensions) {
+        return dimensions is map
+          && dimensions.keys().hasOnly(['adherence', 'nutrition', 'training', 'recovery', 'clinical', 'behavior'])
+          && dimensions.adherence is number && dimensions.adherence >= 0 && dimensions.adherence <= 100
+          && dimensions.nutrition is number && dimensions.nutrition >= 0 && dimensions.nutrition <= 100
+          && dimensions.training is number && dimensions.training >= 0 && dimensions.training <= 100
+          && dimensions.recovery is number && dimensions.recovery >= 0 && dimensions.recovery <= 100
+          && dimensions.clinical is number && dimensions.clinical >= 0 && dimensions.clinical <= 100
+          && dimensions.behavior is number && dimensions.behavior >= 0 && dimensions.behavior <= 100;
+      }
+
       function isValidLeadCreate() {
         return request.resource.data.keys().hasOnly([
             'name', 'email', 'whatsapp', 'goal', 'lmScore', 'classification', 'tags',
@@ -26,7 +37,7 @@ service cloud.firestore {
           && request.resource.data.name is string
           && request.resource.data.email is string
           && request.resource.data.whatsapp is string
-          && request.resource.data.goal in ['emagrecimento', 'hipertrofia', 'performance', 'saude']
+          && request.resource.data.goal in ['fat_loss', 'muscle_gain', 'health']
           && request.resource.data.lmScore is int
           && request.resource.data.lmScore >= 0
           && request.resource.data.lmScore <= 100
@@ -35,7 +46,7 @@ service cloud.firestore {
           && request.resource.data.tags.size() <= 5
           && request.resource.data.leadValue in ['high', 'medium', 'low']
           && request.resource.data.recommendedOffer in ['produto_digital', 'consultoria_online', 'presencial']
-          && request.resource.data.dimensions is map
+          && hasValidDimensions(request.resource.data.dimensions)
           && request.resource.data.coachSummary is string
           && (!('priority' in request.resource.data) || isValidPriority(request.resource.data.priority))
           && request.resource.data.status == 'NEW'

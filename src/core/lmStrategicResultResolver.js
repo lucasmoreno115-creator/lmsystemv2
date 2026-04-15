@@ -1,6 +1,7 @@
 function normalizeGoal(goal) {
   if (goal === 'fat_loss') return 'fat_loss';
   if (goal === 'muscle_gain') return 'muscle_gain';
+  if (goal === 'health') return 'health';
   return 'health';
 }
 
@@ -95,11 +96,11 @@ function resolveBehaviorInsights(tags) {
     'Sua estratégia precisa respeitar sua rotina atual. Quanto mais a estratégia encaixar na sua realidade, maior a chance de resultado.'
   );
   pushIf(
-    safeTags.includes('poor_sleep_quality') || safeTags.includes('low_recovery'),
+    safeTags.includes('low_recovery'),
     'Melhorar sua recuperação pode acelerar seu resultado mais do que simplesmente aumentar o volume de treino.'
   );
   pushIf(
-    safeTags.includes('pain_limitation') || safeTags.includes('clinical_attention'),
+    safeTags.includes('pain_or_injury') || safeTags.includes('clinical_attention'),
     'Antes de intensificar, o mais importante agora é ajustar sua execução e respeitar seu momento atual.'
   );
   pushIf(
@@ -107,7 +108,7 @@ function resolveBehaviorInsights(tags) {
     'Mais do que buscar perfeição, seu foco agora deve ser tornar sua alimentação mais previsível ao longo da semana.'
   );
   pushIf(
-    safeTags.includes('good_readiness'),
+    safeTags.includes('good_readiness') || safeTags.includes('ready_for_consulting'),
     'Você já tem uma base favorável para evoluir. Agora o ganho tende a vir de uma estratégia melhor organizada.'
   );
 
@@ -116,7 +117,7 @@ function resolveBehaviorInsights(tags) {
 
 function resolveTension({ lmScore, tags }) {
   const safeTags = Array.isArray(tags) ? tags : [];
-  if (safeTags.includes('high_stress') || safeTags.includes('needs_accountability')) {
+  if (safeTags.includes('high_stress') || safeTags.includes('needs_accountability') || safeTags.includes('clinical_attention')) {
     return 'Sem uma estratégia mais clara, fica muito mais difícil sustentar resultado ao longo do tempo.';
   }
   if (safeTags.includes('low_consistency') || safeTags.includes('high_motivation_low_consistency')) {
@@ -131,7 +132,7 @@ function resolveTension({ lmScore, tags }) {
 function resolveCtaLabel({ lmScore, normalizedGoal, tags }) {
   const safeTags = Array.isArray(tags) ? tags : [];
   if (safeTags.includes('needs_accountability')) return 'Quero estrutura e acompanhamento';
-  if (safeTags.includes('good_readiness')) return 'Quero otimizar minha estratégia';
+  if (safeTags.includes('good_readiness') || safeTags.includes('ready_for_consulting')) return 'Quero otimizar minha estratégia';
   if (lmScore >= 80) return 'Quero refinar minha estratégia';
   if (lmScore <= 39 && normalizedGoal === 'fat_loss') return 'Quero começar do jeito certo';
   if (lmScore <= 59 && normalizedGoal === 'fat_loss') return 'Quero acelerar meus resultados';

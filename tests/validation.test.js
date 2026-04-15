@@ -24,7 +24,7 @@ test('parseAndValidateForm validates and parses payload', () => {
 
   assert.equal(payload.goal, 'muscle_gain');
   assert.equal(payload.trainingFrequency, 4);
-  assert.equal(payload.stressLevel, 2);
+  assert.equal(payload.stressLevel, 4);
 });
 
 test('parseAndValidateForm fails for invalid email', () => {
@@ -44,7 +44,7 @@ test('parseAndValidateForm fails for invalid email', () => {
   })));
 });
 
-test('parseAndValidateForm maps UI goals to legacy objective buckets', () => {
+test('parseAndValidateForm maps UI goals to canonical objective buckets', () => {
   const payload = parseAndValidateForm(makeFormData({
     name: 'Maria',
     email: 'maria@example.com',
@@ -63,7 +63,7 @@ test('parseAndValidateForm maps UI goals to legacy objective buckets', () => {
   assert.equal(payload.goal, 'fat_loss');
 });
 
-test('parseAndValidateForm keeps stress mapping compatible with score engine', () => {
+test('parseAndValidateForm maps fallback goals to health', () => {
   const payload = parseAndValidateForm(makeFormData({
     name: 'Maria',
     email: 'maria@example.com',
@@ -79,5 +79,6 @@ test('parseAndValidateForm keeps stress mapping compatible with score engine', (
     motivationLevel: '3'
   }));
 
-  assert.equal(payload.stressLevel, 5);
+  assert.equal(payload.goal, 'health');
+  assert.equal(payload.stressLevel, 1);
 });

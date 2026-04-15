@@ -5,7 +5,7 @@ import { buildStrategicResult } from '../src/core/lmStrategicResultResolver.js';
 test('buildStrategicResult returns expected score meaning ranges', () => {
   const low = buildStrategicResult({ lmScore: 30, goal: 'fat_loss', tags: ['low_consistency'] });
   const medium = buildStrategicResult({ lmScore: 55, goal: 'muscle_gain', tags: ['high_motivation_low_consistency'] });
-  const high = buildStrategicResult({ lmScore: 85, goal: 'maintenance', tags: ['good_readiness'] });
+  const high = buildStrategicResult({ lmScore: 85, goal: 'health', tags: ['good_readiness'] });
 
   assert.equal(low.classificationLabel, 'Base em construção');
   assert.equal(medium.classificationLabel, 'Em evolução');
@@ -50,7 +50,7 @@ test('buildStrategicResult handles pain limitation scenario', () => {
   const result = buildStrategicResult({
     lmScore: 62,
     goal: 'muscle_gain',
-    tags: ['pain_limitation']
+    tags: ['pain_or_injury']
   });
 
   assert.match(result.behaviorInsights[0], /respeitar seu momento atual/);

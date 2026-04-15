@@ -8,12 +8,13 @@ export const GOALS = [
   'saude_condicionamento',
   'outro'
 ];
-const LEGACY_GOAL_BY_UI_GOAL = {
+
+const CANONICAL_GOAL_BY_UI_GOAL = {
   emagrecimento: 'fat_loss',
   definicao_muscular: 'fat_loss',
   ganho_massa_muscular: 'muscle_gain',
-  saude_condicionamento: 'maintenance',
-  outro: 'maintenance'
+  saude_condicionamento: 'health',
+  outro: 'health'
 };
 
 const numericFields = [
@@ -34,7 +35,7 @@ export function parseAndValidateForm(formData) {
     name: normalizeText(formData.get('name')),
     email: normalizeText(formData.get('email')).toLowerCase(),
     whatsapp: normalizeText(formData.get('whatsapp')),
-    goal: LEGACY_GOAL_BY_UI_GOAL[uiGoal]
+    goal: CANONICAL_GOAL_BY_UI_GOAL[uiGoal]
   };
 
   invariant(payload.name.length >= 2, 'Nome inválido.');
@@ -45,7 +46,7 @@ export function parseAndValidateForm(formData) {
   for (const field of numericFields) {
     const raw = Number(formData.get(field));
     assertNumberInRange(raw, 1, 5, field);
-    payload[field] = field === 'stressLevel' ? 6 - raw : raw;
+    payload[field] = raw;
   }
 
   return payload;

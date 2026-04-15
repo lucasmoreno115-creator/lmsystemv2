@@ -1,69 +1,46 @@
-function legacyTags({ dimensions, lmScore, leadValue }) {
-  const tags = [];
-
-  if (lmScore < 45) tags.push('iniciante');
-  else if (lmScore < 70) tags.push('intermediario');
-  else tags.push('avancado');
-
-  if (dimensions.recovery < 55) tags.push('baixa_recuperacao');
-  if (dimensions.clinical < 60) tags.push('dor_ativa');
-  if (dimensions.adherence < 50) tags.push('baixa_adesao');
-  if (dimensions.behavior >= 80) tags.push('alta_motivacao');
-  if (dimensions.behavior < 55) tags.push('inconsistente');
-  if (dimensions.adherence >= 75 && dimensions.behavior >= 75) tags.push('disciplinado');
-
-  const leadTag = leadValue === 'high' ? 'alto_valor' : leadValue === 'medium' ? 'medio_valor' : 'baixo_valor';
-  tags.push(leadTag);
-
-  return [...new Set(tags)].slice(0, 5);
-}
-
 function addTag(tags, value) {
   if (!tags.includes(value) && tags.length < 5) tags.push(value);
 }
 
-function nextGenTags({ lmScore, dimensions, profile }) {
+export function generateTags({ lmScore = 0, dimensions = {}, profile = {}, leadValue = 'medium' } = {}) {
   const tags = [];
 
-  if ((dimensions.clinical ?? 0) >= 75 || profile?.pain) addTag(tags, 'high_clinical_risk');
-  if (profile?.pain) addTag(tags, 'pain_or_injury');
+  const adherence = dimensions.adherence ?? 0;
+  const behavior = dimensions.behavior ?? 0;
+  const recovery = dimensions.recovery ?? 0;
+  const clinical = dimensions.clinical ?? 0;
+  const nutrition = dimensions.nutrition ?? 0;
+  const stressLevel = profile.stressLevel ?? 3;
 
-  if ((dimensions.adherence ?? 0) < 50) addTag(tags, 'low_adherence');
-  if ((dimensions.adherence ?? 0) < 45 || (dimensions.behavior ?? 0) < 45 || lmScore < 40) addTag(tags, 'high_drop_risk');
+  const hasClinicalAttention = clinical < 45 || profile.painInjury >= 4 || profile.pain === true;
 
-  if ((profile?.strengthFrequency ?? 0) === 0) addTag(tags, 'no_strength_training');
-  if ((profile?.aerobicFrequency ?? 0) === 0) addTag(tags, 'no_aerobic_training');
-  if (((profile?.strengthFrequency ?? 0) + (profile?.aerobicFrequency ?? 0)) <= 1) addTag(tags, 'low_training_frequency');
+  if (hasClinicalAttention) addTag(tags, 'clinical_attention');
+  if (profile.painInjury >= 4 || profile.pain === true) addTag(tags, 'pain_or_injury');
 
-  if ((dimensions.adherence ?? 0) < 60 && (dimensions.behavior ?? 0) < 60) addTag(tags, 'needs_accountability');
+  if (adherence < 50) addTag(tags, 'low_adherence');
+  if (recovery < 55) addTag(tags, 'low_recovery');
+  if (nutrition < 45) addTag(tags, 'low_nutrition_adherence');
+  if (stressLevel <= 2) addTag(tags, 'high_stress');
 
-  if ((profile?.nutritionOffDays ?? 0) >= 5 || (dimensions.nutrition ?? 0) < 40) addTag(tags, 'high_off_diet_days');
-  if ((dimensions.adherence ?? 0) < 50 && ((profile?.nutritionOffDays ?? 0) >= 4 || (dimensions.behavior ?? 0) < 50)) {
-    addTag(tags, 'inconsistency_pattern');
+  if (adherence < 55 && behavior < 55) addTag(tags, 'low_consistency');
+  if (behavior >= 75 && adherence < 60) addTag(tags, 'high_motivation_low_consistency');
+  if (adherence < 50 || behavior < 45 || lmScore < 40) addTag(tags, 'high_drop_risk');
+  if (adherence < 60 && behavior < 60) addTag(tags, 'needs_accountability');
+
+  const trainingFrequency = profile.trainingFrequency ?? profile.strengthFrequency ?? 0;
+  if (trainingFrequency <= 2) addTag(tags, 'low_training_frequency');
+
+  if (lmScore >= 72 && adherence >= 72 && behavior >= 70 && recovery >= 60 && clinical >= 55) {
+    addTag(tags, 'good_readiness');
   }
 
-  if ((dimensions.adherence ?? 0) >= 75 && (dimensions.behavior ?? 0) >= 75 && lmScore >= 70) {
-    addTag(tags, 'self_driven');
+  if (!hasClinicalAttention && lmScore >= 68 && adherence >= 65 && behavior >= 65) {
     addTag(tags, 'digital_product_fit');
   }
 
-  if (lmScore >= 55 && (dimensions.adherence ?? 0) >= 55 && (dimensions.behavior ?? 0) >= 55 && (dimensions.clinical ?? 100) < 60) {
+  if (!hasClinicalAttention && lmScore >= 55 && adherence >= 55 && behavior >= 55 && leadValue !== 'low') {
     addTag(tags, 'ready_for_consulting');
   }
 
   return tags;
-}
-
-export function generateTags(input, maybeDimensions) {
-  if (maybeDimensions) {
-    return nextGenTags({ profile: input ?? {}, dimensions: maybeDimensions ?? {}, lmScore: 0 });
-  }
-
-  const payload = input ?? {};
-
-  if (payload.profile) {
-    return nextGenTags(payload);
-  }
-
-  return legacyTags(payload);
 }

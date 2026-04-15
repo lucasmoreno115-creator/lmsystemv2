@@ -37,8 +37,13 @@ export async function processLeadSubmission({ formElement, db }) {
   const scoreResult = calculateLmScore(userInput);
   const classification = classifyLead(scoreResult);
   const leadValue = evaluateLeadValue(scoreResult);
-  const recommendedOffer = recommendOffer({ leadValue, dimensions: scoreResult.dimensions });
-  const tags = generateTags({ ...scoreResult, leadValue });
+  const tags = generateTags({ ...scoreResult, profile: userInput, leadValue });
+  const recommendedOffer = recommendOffer({
+    lmScore: scoreResult.lmScore,
+    leadValue,
+    dimensions: scoreResult.dimensions,
+    tags
+  });
 
   let priority = null;
   try {
@@ -72,7 +77,14 @@ export async function processLeadSubmission({ formElement, db }) {
     status: 'NEW'
   };
 
-  await saveLead(db, leadPayload);
+  try {
+    await saveLead(db, leadPayload);
+  } catch (error) {
+    const saveError = new Error('Seu diagnóstico foi calculado, mas houve falha ao salvar. Tente enviar novamente em instantes.');
+    saveError.code = 'LEAD_SAVE_FAILED';
+    saveError.cause = error;
+    throw saveError;
+  }
 
   return {
     lmScore: scoreResult.lmScore,

@@ -14,7 +14,8 @@ for (const scenario of cases) {
   const result = generateTags({
     lmScore: scenario.input.lmScore,
     dimensions: scenario.input.dimensions,
-    profile: scenario.input.profile
+    profile: scenario.input.profile,
+    leadValue: scenario.input.leadValue
   });
 
   const tags = Array.isArray(result) ? result : Array.isArray(result?.tags) ? result.tags : [];
