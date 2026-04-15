@@ -2,21 +2,29 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { renderResult } from '../src/ui/resultRenderer.js';
 
-test('renderResult renders classification label and behavior insights without crashing', () => {
+test('renderResult renders strategic narrative, highlight blocks and dynamic CTA attrs', () => {
   const container = {
     innerHTML: '',
     classList: { remove() {} }
   };
 
-  renderResult(container, {
+  const strategic = renderResult(container, {
     lmScore: 55,
     classification: 'Intermediário inconsistente',
-    goal: 'fat_loss',
     tags: ['high_motivation_low_consistency', 'needs_accountability'],
     profile: {},
-    ctaHref: '#'
+    leadPayload: {
+      dimensions: { clinical: 70, adherence: 35, behavior: 45 },
+      recommendedOffer: 'consultoria_online',
+      priority: { level: 'high' }
+    }
   });
 
-  assert.match(container.innerHTML, /Classificação:<\/strong> Em evolução/);
-  assert.match(container.innerHTML, /Insight comportamental/);
+  assert.equal(strategic.clientState, 'LOW_ADHERENCE');
+  assert.match(container.innerHTML, /Diagnóstico estratégico personalizado/);
+  assert.match(container.innerHTML, /Virada de chave/);
+  assert.match(container.innerHTML, /result-diagnosis/);
+  assert.match(container.innerHTML, /data-client-state="LOW_ADHERENCE"/);
+  assert.match(container.innerHTML, /data-recommended-offer="consultoria_online"/);
+  assert.match(container.innerHTML, /\.\/planos\.html#consultoria-online/);
 });
