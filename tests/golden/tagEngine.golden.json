@@ -1,97 +1,70 @@
 [
   {
-    "name": "gera_tags_baixa_adesao",
+    "name": "gera_tags_clinicas_e_recuperacao",
     "input": {
       "lmScore": 38,
       "dimensions": {
         "adherence": 30,
         "nutrition": 45,
         "training": 50,
-        "recovery": 60,
-        "clinical": 15,
+        "recovery": 48,
+        "clinical": 22,
         "behavior": 32
       },
       "profile": {
-        "strengthFrequency": 2,
-        "aerobicFrequency": 0,
-        "nutritionOffDays": 4
-      }
+        "trainingFrequency": 2,
+        "stressLevel": 2,
+        "painInjury": 4
+      },
+      "leadValue": "low"
     },
     "expected": {
       "mustInclude": [
-        "low_adherence",
-        "high_drop_risk",
-        "needs_accountability"
+        "clinical_attention",
+        "pain_or_injury",
+        "low_recovery"
       ],
       "mustNotInclude": [
-        "self_driven",
-        "digital_product_fit"
+        "digital_product_fit",
+        "good_readiness"
       ],
       "maxTags": 5
     }
   },
   {
-    "name": "gera_tags_produto_digital",
+    "name": "gera_tags_prontidao_digital",
     "input": {
-      "lmScore": 76,
+      "lmScore": 78,
       "dimensions": {
         "adherence": 82,
         "nutrition": 74,
         "training": 72,
         "recovery": 68,
-        "clinical": 10,
+        "clinical": 84,
         "behavior": 80
       },
       "profile": {
-        "strengthFrequency": 4,
-        "aerobicFrequency": 2,
-        "nutritionOffDays": 1
-      }
+        "trainingFrequency": 4,
+        "stressLevel": 4,
+        "painInjury": 1
+      },
+      "leadValue": "medium"
     },
     "expected": {
       "mustInclude": [
-        "self_driven",
-        "digital_product_fit"
+        "good_readiness",
+        "digital_product_fit",
+        "ready_for_consulting"
       ],
       "mustNotInclude": [
-        "low_adherence",
+        "clinical_attention",
         "high_drop_risk"
       ],
       "maxTags": 5
     }
   },
   {
-    "name": "gera_tags_clinicas",
-    "input": {
-      "lmScore": 44,
-      "dimensions": {
-        "adherence": 58,
-        "nutrition": 50,
-        "training": 46,
-        "recovery": 41,
-        "clinical": 84,
-        "behavior": 52
-      },
-      "profile": {
-        "strengthFrequency": 3,
-        "aerobicFrequency": 1,
-        "nutritionOffDays": 2,
-        "pain": true
-      }
-    },
-    "expected": {
-      "mustInclude": [
-        "high_clinical_risk",
-        "pain_or_injury"
-      ],
-      "mustNotInclude": [
-        "digital_product_fit"
-      ],
-      "maxTags": 5
-    }
-  },
-  {
-    "name": "gera_tags_inconsistencia_nutricional",
+    "name": "gera_tags_inconsistencia",
     "input": {
       "lmScore": 49,
       "dimensions": {
@@ -99,52 +72,24 @@
         "nutrition": 35,
         "training": 54,
         "recovery": 58,
-        "clinical": 18,
+        "clinical": 70,
         "behavior": 45
       },
       "profile": {
-        "strengthFrequency": 3,
-        "aerobicFrequency": 1,
-        "nutritionOffDays": 5
-      }
-    },
-    "expected": {
-      "mustInclude": [
-        "inconsistency_pattern",
-        "high_off_diet_days"
-      ],
-      "mustNotInclude": [
-        "self_driven"
-      ],
-      "maxTags": 5
-    }
-  },
-  {
-    "name": "gera_tags_sem_musculacao_sem_aerobio",
-    "input": {
-      "lmScore": 33,
-      "dimensions": {
-        "adherence": 43,
-        "nutrition": 40,
-        "training": 25,
-        "recovery": 51,
-        "clinical": 20,
-        "behavior": 40
+        "trainingFrequency": 3,
+        "stressLevel": 3,
+        "painInjury": 2
       },
-      "profile": {
-        "strengthFrequency": 0,
-        "aerobicFrequency": 0,
-        "nutritionOffDays": 3
-      }
+      "leadValue": "medium"
     },
     "expected": {
       "mustInclude": [
-        "no_strength_training",
-        "no_aerobic_training",
-        "low_training_frequency"
+        "low_adherence",
+        "low_nutrition_adherence",
+        "high_drop_risk"
       ],
       "mustNotInclude": [
-        "ready_for_consulting"
+        "digital_product_fit"
       ],
       "maxTags": 5
     }

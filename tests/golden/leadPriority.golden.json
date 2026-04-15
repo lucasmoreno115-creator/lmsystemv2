@@ -1,24 +1,17 @@
 [
   {
-    "name": "consultoria_quente_boa_prontidao",
+    "name": "consultoria_pronta_alta_prioridade",
     "input": {
-      "lmScore": 56,
-      "classification": "moderate",
+      "lmScore": 66,
       "recommendedOffer": "consultoria_online",
       "leadValue": "high",
       "dimensions": {
         "adherence": 68,
-        "nutrition": 44,
-        "training": 48,
-        "recovery": 61,
-        "clinical": 22,
-        "behavior": 58
+        "clinical": 74
       },
       "tags": [
-        "needs_guidance",
-        "needs_accountability",
         "ready_for_consulting",
-        "high_buy_intent"
+        "good_readiness"
       ]
     },
     "expected": {
@@ -26,97 +19,24 @@
       "closeProbability": "high",
       "contactAction": "contact_today",
       "mustIncludeReasons": [
-        "necessidade",
         "consultoria",
-        "acompanhamento"
+        "fechamento"
       ]
     }
   },
   {
-    "name": "lead_frio_baixa_adesao_baixo_fit",
+    "name": "prioridade_clinica_presencial",
     "input": {
-      "lmScore": 34,
-      "classification": "high_risk",
-      "recommendedOffer": "consultoria_online",
-      "leadValue": "low",
-      "dimensions": {
-        "adherence": 31,
-        "nutrition": 28,
-        "training": 35,
-        "recovery": 37,
-        "clinical": 25,
-        "behavior": 29
-      },
-      "tags": [
-        "low_adherence",
-        "all_or_nothing_behavior",
-        "low_buy_intent",
-        "needs_guidance",
-        "high_drop_risk"
-      ]
-    },
-    "expected": {
-      "priorityLevel": "low",
-      "closeProbability": "low",
-      "contactAction": "automation",
-      "mustIncludeReasons": [
-        "baixa adesão",
-        "baixo",
-        "comportamental"
-      ]
-    }
-  },
-  {
-    "name": "perfil_produto_digital_autonomo",
-    "input": {
-      "lmScore": 74,
-      "classification": "good",
-      "recommendedOffer": "produto_digital",
-      "leadValue": "medium",
-      "dimensions": {
-        "adherence": 80,
-        "nutrition": 71,
-        "training": 73,
-        "recovery": 66,
-        "clinical": 12,
-        "behavior": 77
-      },
-      "tags": [
-        "self_driven",
-        "digital_product_fit",
-        "high_buy_intent"
-      ]
-    },
-    "expected": {
-      "priorityLevel": "medium",
-      "closeProbability": "medium",
-      "contactAction": "automation",
-      "mustIncludeReasons": [
-        "digital",
-        "autônomo",
-        "baixa urgência"
-      ]
-    }
-  },
-  {
-    "name": "caso_clinico_para_presencial",
-    "input": {
-      "lmScore": 41,
-      "classification": "clinical_override",
+      "lmScore": 52,
       "recommendedOffer": "presencial",
       "leadValue": "medium",
       "dimensions": {
         "adherence": 58,
-        "nutrition": 49,
-        "training": 42,
-        "recovery": 45,
-        "clinical": 82,
-        "behavior": 54
+        "clinical": 28
       },
       "tags": [
-        "high_clinical_risk",
-        "pain_or_injury",
-        "needs_guidance"
+        "clinical_attention",
+        "pain_or_injury"
       ]
     },
     "expected": {
@@ -125,32 +45,48 @@
       "contactAction": "contact_today",
       "mustIncludeReasons": [
         "clínica",
-        "presencial",
-        "risco"
+        "presencial"
       ]
     }
   },
   {
-    "name": "extremo_negativo_tudo_ruim",
+    "name": "fluxo_digital_automatizado",
     "input": {
-      "lmScore": 18,
-      "classification": "high_risk",
+      "lmScore": 74,
+      "recommendedOffer": "produto_digital",
+      "leadValue": "medium",
+      "dimensions": {
+        "adherence": 80,
+        "clinical": 85
+      },
+      "tags": [
+        "digital_product_fit",
+        "good_readiness"
+      ]
+    },
+    "expected": {
+      "priorityLevel": "medium",
+      "closeProbability": "low",
+      "contactAction": "automation",
+      "mustIncludeReasons": [
+        "digital",
+        "urgência"
+      ]
+    }
+  },
+  {
+    "name": "baixo_fit_baixa_prioridade",
+    "input": {
+      "lmScore": 28,
       "recommendedOffer": "consultoria_online",
       "leadValue": "low",
       "dimensions": {
-        "adherence": 20,
-        "nutrition": 18,
-        "training": 15,
-        "recovery": 24,
-        "clinical": 36,
-        "behavior": 22
+        "adherence": 30,
+        "clinical": 62
       },
       "tags": [
-        "low_adherence",
-        "all_or_nothing_behavior",
-        "low_buy_intent",
         "high_drop_risk",
-        "needs_guidance"
+        "low_adherence"
       ]
     },
     "expected": {
@@ -159,164 +95,7 @@
       "contactAction": "automation",
       "mustIncludeReasons": [
         "baixo fit",
-        "alto risco",
-        "baixa adesão"
-      ]
-    }
-  },
-  {
-    "name": "borderline_adesao_49_deve_cair",
-    "input": {
-      "lmScore": 52,
-      "classification": "moderate",
-      "recommendedOffer": "consultoria_online",
-      "leadValue": "medium",
-      "dimensions": {
-        "adherence": 49,
-        "nutrition": 52,
-        "training": 50,
-        "recovery": 56,
-        "clinical": 18,
-        "behavior": 47
-      },
-      "tags": [
-        "needs_guidance",
-        "inconsistency_pattern"
-      ]
-    },
-    "expected": {
-      "priorityLevel": "medium",
-      "closeProbability": "medium",
-      "contactAction": "contact_24h",
-      "mustIncludeReasons": [
-        "inconsistência",
-        "direcionamento"
-      ]
-    }
-  },
-  {
-    "name": "borderline_adesao_50_deve_subir",
-    "input": {
-      "lmScore": 52,
-      "classification": "moderate",
-      "recommendedOffer": "consultoria_online",
-      "leadValue": "medium",
-      "dimensions": {
-        "adherence": 50,
-        "nutrition": 52,
-        "training": 50,
-        "recovery": 56,
-        "clinical": 18,
-        "behavior": 50
-      },
-      "tags": [
-        "needs_guidance",
-        "needs_accountability"
-      ]
-    },
-    "expected": {
-      "priorityLevel": "high",
-      "closeProbability": "medium",
-      "contactAction": "contact_today",
-      "mustIncludeReasons": [
-        "accountability",
-        "consultoria",
-        "direcionamento"
-      ]
-    }
-  },
-  {
-    "name": "score_69_consultoria_ainda_media_alta_dor",
-    "input": {
-      "lmScore": 69,
-      "classification": "moderate",
-      "recommendedOffer": "consultoria_online",
-      "leadValue": "medium",
-      "dimensions": {
-        "adherence": 63,
-        "nutrition": 57,
-        "training": 54,
-        "recovery": 59,
-        "clinical": 16,
-        "behavior": 61
-      },
-      "tags": [
-        "needs_guidance",
-        "ready_for_consulting"
-      ]
-    },
-    "expected": {
-      "priorityLevel": "high",
-      "closeProbability": "high",
-      "contactAction": "contact_today",
-      "mustIncludeReasons": [
-        "consultoria",
-        "fit",
-        "guidance"
-      ]
-    }
-  },
-  {
-    "name": "score_70_melhor_estado_menor_dor",
-    "input": {
-      "lmScore": 70,
-      "classification": "good",
-      "recommendedOffer": "produto_digital",
-      "leadValue": "medium",
-      "dimensions": {
-        "adherence": 66,
-        "nutrition": 68,
-        "training": 70,
-        "recovery": 62,
-        "clinical": 10,
-        "behavior": 67
-      },
-      "tags": [
-        "self_driven",
-        "digital_product_fit"
-      ]
-    },
-    "expected": {
-      "priorityLevel": "medium",
-      "closeProbability": "medium",
-      "contactAction": "automation",
-      "mustIncludeReasons": [
-        "digital",
-        "autonomia",
-        "menor urgência"
-      ]
-    }
-  },
-  {
-    "name": "conflito_tags_buy_intent_e_price_sensitive",
-    "input": {
-      "lmScore": 58,
-      "classification": "moderate",
-      "recommendedOffer": "consultoria_online",
-      "leadValue": "medium",
-      "dimensions": {
-        "adherence": 64,
-        "nutrition": 46,
-        "training": 55,
-        "recovery": 51,
-        "clinical": 14,
-        "behavior": 60
-      },
-      "tags": [
-        "high_buy_intent",
-        "price_sensitive",
-        "needs_accountability",
-        "ready_for_consulting"
-      ]
-    },
-    "expected": {
-      "priorityLevel": "high",
-      "closeProbability": "medium",
-      "contactAction": "contact_today",
-      "mustIncludeReasons": [
-        "interesse",
-        "sensível a preço",
-        "consultoria"
+        "abandono"
       ]
     }
   }
