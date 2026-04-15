@@ -1,79 +1,63 @@
 import { USER_MESSAGE_48H } from '../utils/strings.js';
 import { buildStrategicResult } from '../core/lmStrategicResultResolver.js';
 
-function renderOptionalRange(label) {
-  if (!label) return '';
-  return `<p class="result-note">${label}</p>`;
-}
-
-function renderBehaviorInsights(insights) {
-  if (!Array.isArray(insights) || insights.length === 0) return '';
-
-  return `
-    <section class="result-block">
-      <h3>Insight comportamental</h3>
-      <ul class="result-list">
-        ${insights.map((insight) => `<li>${insight}</li>`).join('')}
-      </ul>
-    </section>
-  `;
+function renderNarrativeParagraph(text, className = '') {
+  return `<p class="${className}">${text}</p>`;
 }
 
 export function renderResult(container, result) {
   const strategic = buildStrategicResult({
     lmScore: result.lmScore,
-    classification: result.classification,
     classificationLabel: result.classificationLabel,
-    goal: result.goal,
     tags: result.tags || result.leadPayload?.tags,
     profile: result.profile,
-    ctaHref: result.ctaHref,
-    ctaButtonLabel: result.ctaButtonLabel
+    dimensions: result.leadPayload?.dimensions,
+    recommendedOffer: result.leadPayload?.recommendedOffer,
+    leadPriority: result.leadPayload?.priority
   });
 
   container.classList.remove('hidden');
   container.innerHTML = `
     <div class="result">
       <section class="result-block result-score-block">
-        <h2>${strategic.scoreMeaningTitle}</h2>
+        <p class="result-eyebrow">${strategic.eyebrow}</p>
+        <h2>${strategic.title}</h2>
         <p class="score">${result.lmScore}/100</p>
         <p class="result-note"><strong>Classificação:</strong> ${strategic.classificationLabel}</p>
-        <p>${strategic.scoreMeaningText}</p>
+        ${renderNarrativeParagraph(strategic.diagnosis, 'result-diagnosis')}
+        ${renderNarrativeParagraph(strategic.explanation)}
+      </section>
+
+      <section class="result-block result-emphasis-block">
+        <h3>Virada de chave</h3>
+        ${renderNarrativeParagraph(strategic.beliefBreak)}
       </section>
 
       <section class="result-block">
-        <h3>${strategic.startingPointTitle}</h3>
-        <p>${strategic.startingPointText}</p>
-      </section>
-      ${renderBehaviorInsights(strategic.behaviorInsights)}
-
-      <section class="result-block">
-        <h3>${strategic.nutritionGuidance.title}</h3>
-        <p>${strategic.nutritionGuidance.text}</p>
-        ${renderOptionalRange(strategic.nutritionGuidance.kcalRangeLabel)}
-        ${renderOptionalRange(strategic.nutritionGuidance.proteinRangeLabel)}
+        <h3>Se nada mudar</h3>
+        ${renderNarrativeParagraph(strategic.consequence)}
       </section>
 
-      <section class="result-block">
-        <h3>${strategic.trainingGuidance.title}</h3>
-        <p>${strategic.trainingGuidance.text}</p>
-        <div class="result-chips">
-          <span class="result-chip">${strategic.trainingGuidance.strengthFrequencyLabel}</span>
-          <span class="result-chip">${strategic.trainingGuidance.cardioFrequencyLabel}</span>
-        </div>
-      </section>
-
-      <section class="result-block">
-        <h3>${strategic.tensionTitle || 'Ponto de atenção estratégico'}</h3>
-        <p>${strategic.tensionText || strategic.tension}</p>
+      <section class="result-block result-emphasis-block">
+        <h3>Direção estratégica</h3>
+        ${renderNarrativeParagraph(strategic.strategicDirection)}
+        ${renderNarrativeParagraph(strategic.bridge, 'result-note')}
       </section>
 
       <section class="result-block result-cta">
-        <h3>${strategic.cta.title}</h3>
-        <p>${strategic.cta.text}</p>
-        <a class="result-cta-button" href="${strategic.cta.href}">${strategic.cta.buttonLabel}</a>
+        <h3>Próximo passo recomendado</h3>
+        <a
+          class="result-cta-button"
+          href="${strategic.cta.href}"
+          data-client-state="${strategic.clientState}"
+          data-recommended-offer="${result.leadPayload?.recommendedOffer || ''}"
+          data-cta-label="${strategic.cta.buttonLabel}"
+        >${strategic.cta.buttonLabel}</a>
+        <p class="result-disclaimer">${strategic.cta.supportText}</p>
         <p class="result-disclaimer">${USER_MESSAGE_48H}</p>
       </section>
     </div>
   `;
+
+  return strategic;
 }

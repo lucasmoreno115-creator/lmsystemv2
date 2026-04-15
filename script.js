@@ -5,6 +5,7 @@ import { mapErrorToMessage } from './src/ui/errorMapper.js';
 import { createSubmitGuard } from './src/ui/submitGuards.js';
 import { renderResult } from './src/ui/resultRenderer.js';
 import { trackEvent } from './src/ui/telemetry.js';
+import { buildResultViewedPayload, buildResultCtaClickedPayload } from './src/ui/resultTelemetry.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBgrhvvz2ZEgUQruCiY4HNgg7AziWEGyfU",
@@ -24,9 +25,7 @@ resultCard.addEventListener('click', (event) => {
   if (!(event.target instanceof HTMLElement)) return;
   if (!event.target.classList.contains('result-cta-button')) return;
 
-  trackEvent('result_cta_clicked', {
-    href: event.target.getAttribute('href') || '#'
-  });
+  trackEvent('result_cta_clicked', buildResultCtaClickedPayload(event.target));
 });
 
 formElement.addEventListener('submit', async (event) => {
@@ -40,11 +39,12 @@ formElement.addEventListener('submit', async (event) => {
 
     const result = await processLeadSubmission({ formElement, db });
 
-    renderResult(resultCard, result);
+    const strategic = renderResult(resultCard, result);
     trackEvent('result_rendered', {
       lmScore: result.lmScore,
       classification: result.classification
     });
+    trackEvent('result_viewed', buildResultViewedPayload({ strategic, result }));
     trackEvent('lead_submit_success', {
       lmScore: result.lmScore,
       offer: result.leadPayload?.recommendedOffer ?? null

@@ -94,3 +94,22 @@ button[disabled] { opacity: .6; cursor: progress; }
 @media (min-width: 680px) {
   .grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+.result-eyebrow {
+  color: var(--accent);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-size: .78rem;
+  margin: 0 0 10px;
+}
+
+.result-diagnosis {
+  font-size: 1.03rem;
+  color: #f0f0f0;
+  font-weight: 600;
+}
+
+.result-emphasis-block {
+  border-color: #3a3219;
+  background: linear-gradient(180deg, #15130d 0%, #101010 100%);
+}
