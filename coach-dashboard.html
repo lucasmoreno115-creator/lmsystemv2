@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LM System | Dashboard de Prescrição</title>
+    <link rel="icon" type="image/png" href="./favicon.png" />
+    <link rel="stylesheet" href="./style.css" />
+    <style>
+      body.admin-gated { visibility: hidden; }
+      .coach-header h1 { margin: 8px 0 4px; }
+      .coach-header p { color: var(--muted); margin: 0; }
+      #coach-dashboard-root { display: grid; gap: 16px; margin-top: 16px; }
+      .coach-grid-meta { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+      .coach-grid-meta p { margin: 0; color: #d7d7d7; }
+      .coach-direction-grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
+      .coach-direction-grid article { border: 1px solid #2f2f2f; border-radius: 12px; padding: 12px; background: #111; }
+      .coach-direction-grid ul, .card ul { margin: 8px 0 0; padding-left: 18px; color: #dcdcdc; }
+      .coach-actions { display: grid; gap: 8px; }
+      .ghost-link { display: inline-block; color: var(--muted); text-decoration: none; border: 1px solid #2f2f2f; border-radius: 10px; padding: 10px 12px; text-align: center; }
+      #planning-base-output { white-space: pre-wrap; background: #0f0f0f; border: 1px solid #2f2f2f; border-radius: 12px; padding: 12px; color: #d8d8d8; max-height: 320px; overflow: auto; }
+      #coach-action-feedback { min-height: 20px; color: var(--accent); margin-top: 8px; }
+      .coach-empty h2 { margin-top: 0; }
+      @media (min-width: 880px) {
+        .app-shell { max-width: 980px; }
+        .coach-direction-grid { grid-template-columns: repeat(3, 1fr); }
+      }
+    </style>
+  </head>
+  <body class="admin-gated">
+    <main class="app-shell">
+      <header class="coach-header">
+        <p class="eyebrow">Coach View</p>
+        <h1>Dashboard de Prescrição</h1>
+        <p>Visão estratégica do aluno e direção inicial de planejamento.</p>
+      </header>
+
+      <section id="coach-dashboard-root"></section>
+      <p id="coach-action-feedback" aria-live="polite"></p>
+    </main>
+
+    <script type="module" src="./src/coach/coach-dashboard-entry.js"></script>
+  </body>
+</html>

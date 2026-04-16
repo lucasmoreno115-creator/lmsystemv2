@@ -10,6 +10,7 @@ import {
   buildResultCtaClickedPayload,
   buildResultExperimentAssignedPayload
 } from './src/ui/resultTelemetry.js';
+import { saveCoachSnapshot } from './src/coach/coachStorage.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBgrhvvz2ZEgUQruCiY4HNgg7AziWEGyfU",
@@ -53,6 +54,15 @@ formElement.addEventListener('submit', async (event) => {
     trackEvent('lead_submit_success', {
       lmScore: result.lmScore,
       offer: result.leadPayload?.recommendedOffer ?? null
+    });
+    saveCoachSnapshot({
+      result,
+      input: result.leadPayload ? {
+        name: result.leadPayload.name,
+        email: result.leadPayload.email,
+        whatsapp: result.leadPayload.whatsapp,
+        goal: result.leadPayload.goal
+      } : null
     });
 
     formElement.reset();
