@@ -5,7 +5,11 @@ import { mapErrorToMessage } from './src/ui/errorMapper.js';
 import { createSubmitGuard } from './src/ui/submitGuards.js';
 import { renderResult } from './src/ui/resultRenderer.js';
 import { trackEvent } from './src/ui/telemetry.js';
-import { buildResultViewedPayload, buildResultCtaClickedPayload } from './src/ui/resultTelemetry.js';
+import {
+  buildResultViewedPayload,
+  buildResultCtaClickedPayload,
+  buildResultExperimentAssignedPayload
+} from './src/ui/resultTelemetry.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBgrhvvz2ZEgUQruCiY4HNgg7AziWEGyfU",
@@ -44,6 +48,7 @@ formElement.addEventListener('submit', async (event) => {
       lmScore: result.lmScore,
       classification: result.classification
     });
+    trackEvent('result_experiment_assigned', buildResultExperimentAssignedPayload(strategic));
     trackEvent('result_viewed', buildResultViewedPayload({ strategic, result }));
     trackEvent('lead_submit_success', {
       lmScore: result.lmScore,

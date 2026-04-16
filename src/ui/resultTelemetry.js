@@ -1,5 +1,8 @@
 export function buildResultViewedPayload({ strategic, result }) {
   return {
+    experimentKey: strategic?.experimentKey || null,
+    variant: strategic?.variant || null,
+    variantSource: strategic?.variantSource || null,
     clientState: strategic?.clientState || null,
     lmScore: result?.lmScore ?? null,
     recommendedOffer: result?.leadPayload?.recommendedOffer ?? null,
@@ -7,8 +10,18 @@ export function buildResultViewedPayload({ strategic, result }) {
   };
 }
 
+export function buildResultExperimentAssignedPayload(strategic) {
+  return {
+    experimentKey: strategic?.experimentKey || null,
+    variant: strategic?.variant || null,
+    source: strategic?.variantSource || null
+  };
+}
+
 export function buildResultCtaClickedPayload(target) {
   return {
+    experimentKey: target?.dataset?.experimentKey || null,
+    variant: target?.dataset?.variant || null,
     clientState: target?.dataset?.clientState || null,
     recommendedOffer: target?.dataset?.recommendedOffer || null,
     ctaLabel: target?.dataset?.ctaLabel || target?.textContent || null,

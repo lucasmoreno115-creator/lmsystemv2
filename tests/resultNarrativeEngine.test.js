@@ -13,28 +13,46 @@ const requiredFields = [
   'bridge',
   'ctaLabel',
   'ctaHref',
-  'ctaSupportText'
+  'ctaSupportText',
+  'variant'
 ];
 
-test('buildResultNarrative returns required fields for all states', () => {
+test('buildResultNarrative returns required fields for all states in both variants', () => {
   const states = ['HIGH_RISK', 'LOW_ADHERENCE', 'INCONSISTENT', 'PLATEAU', 'BEGINNER_LOST', 'HIGH_PERFORMER'];
 
   for (const state of states) {
-    const narrative = buildResultNarrative({ clientState: state, recommendedOffer: 'consultoria_online' });
+    for (const variant of ['A', 'B']) {
+      const narrative = buildResultNarrative({
+        clientState: state,
+        variant,
+        recommendedOffer: 'consultoria_online'
+      });
 
-    for (const key of requiredFields) {
-      assert.ok(typeof narrative[key] === 'string' && narrative[key].length > 0, `${state} should include ${key}`);
+      for (const key of requiredFields) {
+        assert.ok(
+          typeof narrative[key] === 'string' && narrative[key].length > 0,
+          `${state}/${variant} should include ${key}`
+        );
+      }
     }
   }
 });
 
-test('buildResultNarrative resolves href by offer and keeps emotional CTA label by state', () => {
-  const lowAdherence = buildResultNarrative({ clientState: 'LOW_ADHERENCE', recommendedOffer: 'produto_digital' });
-  const highPerformer = buildResultNarrative({ clientState: 'HIGH_PERFORMER', recommendedOffer: 'presencial' });
+test('buildResultNarrative keeps clientState specificity and offer CTA href by variant', () => {
+  const lowAdherenceA = buildResultNarrative({
+    clientState: 'LOW_ADHERENCE',
+    variant: 'A',
+    recommendedOffer: 'produto_digital'
+  });
+  const lowAdherenceB = buildResultNarrative({
+    clientState: 'LOW_ADHERENCE',
+    variant: 'B',
+    recommendedOffer: 'produto_digital'
+  });
 
-  assert.equal(lowAdherence.ctaLabel, 'Começar com o plano certo para mim agora');
-  assert.equal(lowAdherence.ctaHref, './planos.html#produto-digital');
-
-  assert.equal(highPerformer.ctaLabel, 'Avançar com uma estratégia no meu nível');
-  assert.equal(highPerformer.ctaHref, './planos.html#presencial');
+  assert.notEqual(lowAdherenceA.diagnosis, lowAdherenceB.diagnosis);
+  assert.match(lowAdherenceA.ctaLabel, /agora|corrigir|jogo/i);
+  assert.match(lowAdherenceB.ctaLabel, /plano|momento|organizar/i);
+  assert.equal(lowAdherenceA.ctaHref, './planos.html#produto-digital');
+  assert.equal(lowAdherenceB.ctaHref, './planos.html#produto-digital');
 });

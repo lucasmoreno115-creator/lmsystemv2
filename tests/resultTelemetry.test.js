@@ -1,10 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildResultViewedPayload, buildResultCtaClickedPayload } from '../src/ui/resultTelemetry.js';
+import {
+  buildResultViewedPayload,
+  buildResultCtaClickedPayload,
+  buildResultExperimentAssignedPayload
+} from '../src/ui/resultTelemetry.js';
 
-test('buildResultViewedPayload includes strategic state and offer metadata', () => {
+test('buildResultViewedPayload includes experiment and strategic metadata', () => {
   const payload = buildResultViewedPayload({
-    strategic: { clientState: 'PLATEAU' },
+    strategic: {
+      experimentKey: 'result_copy_ab_v1',
+      variant: 'A',
+      variantSource: 'storage',
+      clientState: 'PLATEAU'
+    },
     result: {
       lmScore: 62,
       leadPayload: {
@@ -15,6 +24,9 @@ test('buildResultViewedPayload includes strategic state and offer metadata', () 
   });
 
   assert.deepEqual(payload, {
+    experimentKey: 'result_copy_ab_v1',
+    variant: 'A',
+    variantSource: 'storage',
     clientState: 'PLATEAU',
     lmScore: 62,
     recommendedOffer: 'consultoria_online',
@@ -22,9 +34,26 @@ test('buildResultViewedPayload includes strategic state and offer metadata', () 
   });
 });
 
+test('buildResultExperimentAssignedPayload keeps source for exposure telemetry', () => {
+  assert.deepEqual(
+    buildResultExperimentAssignedPayload({
+      experimentKey: 'result_copy_ab_v1',
+      variant: 'B',
+      variantSource: 'random'
+    }),
+    {
+      experimentKey: 'result_copy_ab_v1',
+      variant: 'B',
+      source: 'random'
+    }
+  );
+});
+
 test('buildResultCtaClickedPayload keeps telemetry safe with dataset fallback', () => {
   const target = {
     dataset: {
+      experimentKey: 'result_copy_ab_v1',
+      variant: 'B',
       clientState: 'HIGH_PERFORMER',
       recommendedOffer: 'produto_digital',
       ctaLabel: 'Avançar com uma estratégia no meu nível'
@@ -37,6 +66,8 @@ test('buildResultCtaClickedPayload keeps telemetry safe with dataset fallback', 
   };
 
   assert.deepEqual(buildResultCtaClickedPayload(target), {
+    experimentKey: 'result_copy_ab_v1',
+    variant: 'B',
     clientState: 'HIGH_PERFORMER',
     recommendedOffer: 'produto_digital',
     ctaLabel: 'Avançar com uma estratégia no meu nível',
