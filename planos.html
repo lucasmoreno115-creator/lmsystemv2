@@ -112,7 +112,7 @@
             <li>1 sessão de orientação</li>
           </ul>
           <p class="plan-final">Ideal para você se: quer direção, mas consegue executar sozinho.</p>
-          <a class="plan-button" href="#">Quero meu plano inicial</a>
+          <a class="plan-button" data-plan="LM Start 30" href="#">Quero meu plano inicial</a>
         </article>
 
         <article class="plan-card featured">
@@ -126,7 +126,7 @@
             <li>Suporte direto</li>
           </ul>
           <p class="plan-final">Ideal para você se: já sabe que sozinho começa bem, mas não mantém.</p>
-          <a class="plan-button" href="#">Quero acompanhamento completo</a>
+          <a class="plan-button" data-plan="LM Premium Coach" href="#">Quero acompanhamento completo</a>
         </article>
 
         <article class="plan-card">
@@ -140,11 +140,21 @@
             <li>Ajustes técnicos imediatos</li>
           </ul>
           <p class="plan-final">Ideal para você se: quer treinar com mais precisão, segurança e acompanhamento ao vivo.</p>
-          <a class="plan-button" href="#">Quero agendar avaliação</a>
+          <a class="plan-button" data-plan="LM Presencial Pro" href="#">Quero agendar avaliação</a>
         </article>
       </section>
 
       <p class="final-message">Você não precisa de mais informação. Precisa do próximo passo certo.</p>
     </main>
+    <script type="module">
+      import { saveSelectedPlan } from './src/coach/coachStorage.js';
+
+      const planButtons = document.querySelectorAll('.plan-button[data-plan]');
+      planButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          saveSelectedPlan(button.dataset.plan);
+        });
+      });
+    </script>
   </body>
 </html>

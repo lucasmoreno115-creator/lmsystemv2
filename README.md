@@ -10,16 +10,33 @@ Sistema completo de triagem inteligente para consultoria fitness, com motor de d
 ## Estrutura
 ```text
 /src
+  /coach
   /core
   /firebase
   /ui
   /utils
 index.html
+coach-dashboard.html
 style.css
 script.js
 firestore.rules
 tests/
 ```
+
+## Dashboard de Prescrição (Coach View)
+- Acesse via `./coach-dashboard-login.html` (uso interno).
+- O dashboard lê snapshot salvo em `localStorage` pelas chaves:
+  - `LM_LAST_RESULT`
+  - `LM_LAST_INPUT`
+  - `LM_LAST_TS`
+  - `LM_SELECTED_PLAN`
+- O acesso interno usa sessão local temporária em `LM_ADMIN_SESSION` com expiração de 240 minutos.
+- O snapshot é atualizado ao gerar diagnóstico em `index.html` e ao selecionar plano em `planos.html`.
+- Regras de prescrição ficam centralizadas em `src/coach/coachPrescriptionEngine.js` (objeto `STATE_RULES`).
+- O texto estruturado de “Gerar planejamento-base” é montado por `src/coach/buildPlanningBase.js`.
+- A senha operacional do dashboard é configurada em `src/admin/adminAccessConfig.js` (`DASHBOARD_PASSWORD`).
+- **Limitação importante:** por ser site estático, essa senha no frontend **não é segurança real**; é barreira operacional.
+- Migração recomendada: trocar o gate atual por autenticação real (Firebase Auth/IdP + validação server-side).
 
 ## Configuração Firebase
 1. Crie um projeto no Firebase.
