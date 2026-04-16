@@ -1,8 +1,14 @@
 import { USER_MESSAGE_48H } from '../utils/strings.js';
 import { buildStrategicResult } from '../core/lmStrategicResultResolver.js';
+import { getForcedResultVariantFromSearch } from '../core/resolveResultVariant.js';
 
 function renderNarrativeParagraph(text, className = '') {
   return `<p class="${className}">${text}</p>`;
+}
+
+function resolveForcedVariantFromWindow() {
+  if (typeof window === 'undefined') return null;
+  return getForcedResultVariantFromSearch(window.location?.search || '');
 }
 
 export function renderResult(container, result) {
@@ -13,12 +19,13 @@ export function renderResult(container, result) {
     profile: result.profile,
     dimensions: result.leadPayload?.dimensions,
     recommendedOffer: result.leadPayload?.recommendedOffer,
-    leadPriority: result.leadPayload?.priority
+    leadPriority: result.leadPayload?.priority,
+    forcedVariant: resolveForcedVariantFromWindow()
   });
 
   container.classList.remove('hidden');
   container.innerHTML = `
-    <div class="result">
+    <div class="result" data-result-variant="${strategic.variant}">
       <section class="result-block result-score-block">
         <p class="result-eyebrow">${strategic.eyebrow}</p>
         <h2>${strategic.title}</h2>
@@ -52,6 +59,8 @@ export function renderResult(container, result) {
           data-client-state="${strategic.clientState}"
           data-recommended-offer="${result.leadPayload?.recommendedOffer || ''}"
           data-cta-label="${strategic.cta.buttonLabel}"
+          data-variant="${strategic.variant}"
+          data-experiment-key="${strategic.experimentKey}"
         >${strategic.cta.buttonLabel}</a>
         <p class="result-disclaimer">${strategic.cta.supportText}</p>
         <p class="result-disclaimer">${USER_MESSAGE_48H}</p>

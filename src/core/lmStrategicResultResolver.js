@@ -1,5 +1,7 @@
 import { resolveClientState } from './resolveClientState.js';
 import { buildResultNarrative } from './resultNarrativeEngine.js';
+import { resolveResultVariant } from './resolveResultVariant.js';
+import { EXPERIMENT_ENABLED, EXPERIMENT_KEY } from './experiments/resultExperimentConfig.js';
 
 function resolveClassificationLabel(lmScore) {
   if (lmScore <= 39) return 'Base em construção';
@@ -15,7 +17,10 @@ export function buildStrategicResult({
   profile,
   dimensions,
   recommendedOffer,
-  leadPriority
+  leadPriority,
+  forcedVariant,
+  storage,
+  experimentEnabled = EXPERIMENT_ENABLED
 }) {
   const resolvedDimensions = dimensions || profile || {};
   const clientState = resolveClientState({
@@ -27,8 +32,15 @@ export function buildStrategicResult({
     profile
   });
 
+  const { variant, source: variantSource } = resolveResultVariant({
+    experimentEnabled,
+    storage,
+    forcedVariant
+  });
+
   const narrative = buildResultNarrative({
     clientState,
+    variant,
     lmScore,
     dimensions: resolvedDimensions,
     recommendedOffer,
@@ -39,6 +51,9 @@ export function buildStrategicResult({
 
   return {
     clientState,
+    variant,
+    variantSource,
+    experimentKey: EXPERIMENT_KEY,
     classificationLabel: classificationLabel || resolveClassificationLabel(lmScore),
     ...narrative,
     cta: {
