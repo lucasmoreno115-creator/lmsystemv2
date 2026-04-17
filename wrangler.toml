@@ -1,0 +1,7 @@
+name = "lmsystemv2"
+compatibility_date = "2026-04-16"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "lmsystemv2-db"
+database_id = "1de90532-157b-473e-8e7a-655ca9e0953d"
