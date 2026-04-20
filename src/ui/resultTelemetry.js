@@ -3,8 +3,10 @@ export function buildResultViewedPayload({ strategic, result }) {
     experimentKey: strategic?.experimentKey || null,
     variant: strategic?.variant || null,
     variantSource: strategic?.variantSource || null,
-    clientState: strategic?.clientState || null,
+    clientState: strategic?.clientState || result?.leadPayload?.clientState || null,
     lmScore: result?.lmScore ?? null,
+    leadId: result?.leadId ?? null,
+    engineVersion: result?.engineVersion ?? null,
     recommendedOffer: result?.leadPayload?.recommendedOffer ?? null,
     leadPriority: result?.leadPayload?.priority?.level ?? null
   };
