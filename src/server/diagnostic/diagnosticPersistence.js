@@ -15,8 +15,17 @@ export async function persistDiagnosticEvaluation({ dbBinding, normalizedPayload
   const now = new Date().toISOString();
   await client.ensureSchema();
 
-  await client.run(
-    'INSERT INTO leads (id, name, email, whatsapp, goal, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',
+  const leadInsert = await client.run(
+    `
+      INSERT INTO leads (
+        id,
+        name,
+        email,
+        whatsapp,
+        goal,
+        created_at
+      ) VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+    `,
     leadId,
     normalizedPayload.lead.name,
     normalizedPayload.lead.email,
@@ -25,16 +34,48 @@ export async function persistDiagnosticEvaluation({ dbBinding, normalizedPayload
     now
   );
 
-  await client.run(
-    'INSERT INTO diagnostic_results (id, lead_id, engine_version, lm_score, classification, result_json, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)',
-    createId('diag'),
+  const diagnosticId = createId('diag');
+
+  const resultInsert = await client.run(
+    `
+      INSERT INTO diagnostic_results (
+        id,
+        lead_id,
+        engine_version,
+        lm_score,
+        classification,
+        dimensions_json,
+        tags_json,
+        client_state,
+        recommended_offer,
+        lead_priority,
+        strategic_result_json,
+        raw_answers_json,
+        meta_json,
+        created_at
+      ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)
+    `,
+    diagnosticId,
     leadId,
     evaluation.engineVersion,
     evaluation.result.lmScore,
     evaluation.result.classification,
-    JSON.stringify(evaluation.result),
+    JSON.stringify(evaluation.result.dimensions ?? {}),
+    JSON.stringify(evaluation.result.tags ?? []),
+    evaluation.result.clientState ?? '',
+    evaluation.result.recommendedOffer ?? '',
+    JSON.stringify(evaluation.result.leadPriority ?? {}),
+    JSON.stringify(evaluation.result.strategicResult ?? {}),
+    JSON.stringify(normalizedPayload.answers ?? {}),
+    JSON.stringify(normalizedPayload.meta ?? {}),
     now
   );
 
-  return { leadId };
+  console.log('leadInsert:', leadInsert);
+  console.log('resultInsert:', resultInsert);
+
+  return {
+    leadId,
+    diagnosticId,
+  };
 }
