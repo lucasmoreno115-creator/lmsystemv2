@@ -7,7 +7,9 @@ export function adaptRemoteDiagnosticResult({ remoteResponse, userInput }) {
     tags: r.tags,
     goal: userInput.goal,
     profile: r.dimensions,
-    strategicResult: r.strategicResult, // 🔥 ESSENCIAL
+    strategicResult: r.strategicResult,
+    leadId: remoteResponse.leadId,
+    engineVersion: remoteResponse.engineVersion,
     leadPayload: {
       name: userInput.name,
       email: userInput.email,
@@ -17,7 +19,9 @@ export function adaptRemoteDiagnosticResult({ remoteResponse, userInput }) {
       classification: r.classification,
       tags: r.tags,
       dimensions: r.dimensions,
-      recommendedOffer: r.recommendedOffer
+      recommendedOffer: r.recommendedOffer,
+      clientState: r.clientState,
+      leadPriority: r.leadPriority
     }
   };
 }

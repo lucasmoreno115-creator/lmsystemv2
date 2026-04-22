@@ -1,3 +1,13 @@
+import { createD1Client } from '../db/d1Client.js';
+
+function createId(prefix) {
+  const random = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID().replace(/-/g, '')
+    : `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+
+  return `${prefix}_${random}`;
+}
+
 export async function persistDiagnosticEvaluation({ dbBinding, normalizedPayload, evaluation }) {
   const client = createD1Client(dbBinding);
   const leadId = createId('lead');
@@ -9,7 +19,6 @@ export async function persistDiagnosticEvaluation({ dbBinding, normalizedPayload
   const now = new Date().toISOString();
   await client.ensureSchema();
 
-  // INSERT LEAD
   await client.run(
     `INSERT INTO leads (id, name, email, whatsapp, goal, created_at)
      VALUES (?1, ?2, ?3, ?4, ?5, ?6)`,
@@ -23,7 +32,6 @@ export async function persistDiagnosticEvaluation({ dbBinding, normalizedPayload
 
   const result = evaluation.result;
 
-  // INSERT RESULT (ALINHADO COM SCHEMA)
   await client.run(
     `INSERT INTO diagnostic_results (
       id,

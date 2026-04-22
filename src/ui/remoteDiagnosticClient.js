@@ -1,4 +1,5 @@
 const FRIENDLY_REMOTE_ERROR = 'Não foi possível processar seu diagnóstico agora. Tente novamente em instantes.';
+const DEFAULT_DIAGNOSTIC_PATH = '/api/diagnostic/evaluate';
 
 function buildRemoteError(code, cause) {
   const error = new Error(FRIENDLY_REMOTE_ERROR);
@@ -7,11 +8,36 @@ function buildRemoteError(code, cause) {
   return error;
 }
 
-export async function evaluateDiagnosticRemote(payload) {
+function resolveBaseUrl() {
+  if (typeof window !== 'undefined') {
+    if (typeof window.__LM_API_BASE__ === 'string' && window.__LM_API_BASE__.trim()) {
+      return window.__LM_API_BASE__.trim().replace(/\/$/, '');
+    }
+
+    const meta = typeof document !== 'undefined'
+      ? document.querySelector('meta[name="lm-api-base"]')
+      : null;
+
+    if (meta && typeof meta.content === 'string' && meta.content.trim()) {
+      return meta.content.trim().replace(/\/$/, '');
+    }
+  }
+
+  return '';
+}
+
+export function resolveDiagnosticEndpoint() {
+  const base = resolveBaseUrl();
+  return base ? `${base}${DEFAULT_DIAGNOSTIC_PATH}` : DEFAULT_DIAGNOSTIC_PATH;
+}
+
+export async function evaluateDiagnosticRemote(payload, options = {}) {
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const endpoint = options.endpoint ?? resolveDiagnosticEndpoint();
   let response;
 
   try {
-    response = await fetch('/api/diagnostic/evaluate', {
+    response = await fetchImpl(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -23,7 +49,7 @@ export async function evaluateDiagnosticRemote(payload) {
   }
 
   if (!response.ok) {
-    const text = await response.text();
+    const text = typeof response.text === 'function' ? await response.text() : null;
     throw buildRemoteError(`HTTP_${response.status}`, text);
   }
 
