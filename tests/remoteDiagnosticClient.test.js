@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { evaluateDiagnosticRemote } from '../src/ui/remoteDiagnosticClient.js';
+import { evaluateDiagnosticRemote, resolveDiagnosticEndpoint } from '../src/ui/remoteDiagnosticClient.js';
+
+test('resolveDiagnosticEndpoint returns relative API path by default', () => {
+  assert.equal(resolveDiagnosticEndpoint(), '/api/diagnostic/evaluate');
+});
 
 test('evaluateDiagnosticRemote performs POST and returns normalized response', async () => {
   const payload = { lead: { name: 'Ana' } };
@@ -38,9 +42,9 @@ test('evaluateDiagnosticRemote performs POST and returns normalized response', a
 test('evaluateDiagnosticRemote throws friendly error for non-2xx status', async () => {
   await assert.rejects(
     () => evaluateDiagnosticRemote({}, {
-      fetchImpl: async () => ({ ok: false, status: 500 })
+      fetchImpl: async () => ({ ok: false, status: 500, text: async () => 'boom' })
     }),
-    (error) => error instanceof Error && error.code === 'REMOTE_HTTP_ERROR'
+    (error) => error instanceof Error && error.code === 'HTTP_500'
   );
 });
 

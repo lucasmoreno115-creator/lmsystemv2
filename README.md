@@ -1,70 +1,97 @@
 # LM System
 
-Sistema completo de triagem inteligente para consultoria fitness, com motor de decisão e armazenamento de leads no Firestore.
+Sistema de diagnóstico com frontend estático em Cloudflare Pages e API isolada em Cloudflare Workers + D1.
 
-## Stack
-- Frontend: HTML + CSS + JavaScript ES Modules (sem frameworks)
-- Backend: Firebase Firestore
-- Deploy: GitHub Pages
+## Arquitetura SaaS recomendada (definitiva)
 
-## Estrutura
+- **Frontend**: Cloudflare Pages (apenas assets estáticos).
+- **API**: Worker dedicado (`workers/api.js`) responsável por `POST /api/diagnostic/evaluate`.
+- **Banco**: D1 vinculado no Worker via binding `DB`.
+- **Contrato de resposta**: `{ ok, leadId, engineVersion, result }`.
+
+> Decisão: separar API em Worker dedicado para evitar ambiguidades de roteamento do Pages Functions (ex.: `405 Method Not Allowed` quando o path cai em asset). Isso elimina comportamento inconsistente entre local e produção.
+
+## Estrutura final de pastas
+
 ```text
-/src
-  /coach
-  /core
-  /firebase
-  /ui
-  /utils
-index.html
-coach-dashboard.html
-style.css
-script.js
-firestore.rules
-tests/
+/functions/api/diagnostic/evaluate.js   # compat local/pages
+/workers/api.js                         # API de produção (Worker dedicado)
+/src/server/diagnostic/evaluateEndpoint.js
+/src/server/diagnostic/diagnosticPersistence.js
+/src/server/db/d1Client.js
+/src/ui/remoteDiagnosticClient.js
+/wrangler.toml
 ```
 
-## Dashboard de Prescrição (Coach View)
-- Acesse via `./coach-dashboard-login.html` (uso interno).
-- O dashboard lê snapshot salvo em `localStorage` pelas chaves:
-  - `LM_LAST_RESULT`
-  - `LM_LAST_INPUT`
-  - `LM_LAST_TS`
-  - `LM_SELECTED_PLAN`
-- O acesso interno usa sessão local temporária em `LM_ADMIN_SESSION` com expiração de 240 minutos.
-- O snapshot é atualizado ao gerar diagnóstico em `index.html` e ao selecionar plano em `planos.html`.
-- Regras de prescrição ficam centralizadas em `src/coach/coachPrescriptionEngine.js` (objeto `STATE_RULES`).
-- O texto estruturado de “Gerar planejamento-base” é montado por `src/coach/buildPlanningBase.js`.
-- A senha operacional do dashboard é configurada em `src/admin/adminAccessConfig.js` (`DASHBOARD_PASSWORD`).
-- **Limitação importante:** por ser site estático, essa senha no frontend **não é segurança real**; é barreira operacional.
-- Migração recomendada: trocar o gate atual por autenticação real (Firebase Auth/IdP + validação server-side).
+## Configuração de endpoint no frontend
 
-## Configuração Firebase
-1. Crie um projeto no Firebase.
-2. Ative Firestore no modo produção.
-3. Em **Firestore Database > Rules**, cole o conteúdo de `firestore.rules`.
-4. Em **Project Settings > Web App**, copie as credenciais e substitua no `script.js`.
-5. Garanta coleção `lm_leads` como destino de criação de documentos.
+O frontend usa por padrão endpoint relativo:
 
-## Deploy no GitHub Pages
-1. Suba este projeto para o GitHub.
-2. Vá em **Settings > Pages**.
-3. Em **Build and deployment**, escolha **Deploy from a branch**.
-4. Escolha branch (`main`) e pasta (`/root`).
-5. Salve e aguarde a URL pública.
+- `'/api/diagnostic/evaluate'`
 
-## Testes
-Pré-requisito: Node 18+.
+Opcionalmente, para API em subdomínio/host distinto, configure **sem hardcode no código**:
+
+1. Meta tag no HTML:
+
+```html
+<meta name="lm-api-base" content="https://api.seudominio.com">
+```
+
+ou
+
+2. Variável global antes do bundle principal:
+
+```html
+<script>window.__LM_API_BASE__ = 'https://api.seudominio.com';</script>
+```
+
+## Deploy (wrangler)
+
+### 1) Login
 
 ```bash
-node --test tests/*.test.js
+wrangler login
 ```
 
-## Checklist de funcionamento
-- [ ] Formulário renderiza em tema dark premium.
-- [ ] Campos obrigatórios validam corretamente.
-- [ ] Submit bloqueia envios simultâneos.
-- [ ] LM Score (0-100) é calculado e exibido.
-- [ ] Classificação é exibida ao usuário.
-- [ ] Mensagem de 48h é exibida.
-- [ ] Payload é salvo em `lm_leads` com `status: NEW`.
-- [ ] Regras bloqueiam leitura pública e update/delete.
+### 2) Criar/migrar D1 (se necessário)
+
+```bash
+wrangler d1 create lmsystemv2-db
+wrangler d1 migrations apply lmsystemv2-db --remote
+```
+
+### 3) Deploy do Worker da API
+
+```bash
+wrangler deploy
+```
+
+### 4) (Opcional, recomendado em produção) rotear `/api/*` para o Worker
+
+No `wrangler.toml`, configure `routes` para seu domínio:
+
+```toml
+routes = [
+  { pattern = "app.seudominio.com/api/*", zone_name = "seudominio.com" }
+]
+```
+
+Depois:
+
+```bash
+wrangler deploy
+```
+
+## Validação pós-deploy (checklist)
+
+- [ ] `POST /api/diagnostic/evaluate` retorna `200` com `{ ok, leadId, engineVersion, result }`.
+- [ ] `GET /api/diagnostic/evaluate` retorna `405`.
+- [ ] Registro gravado em `leads` e `diagnostic_results` no D1.
+- [ ] Frontend em produção conclui fluxo completo sem fallback local.
+- [ ] Logs do Worker sem erros de validação/persistência inesperados.
+
+## Testes
+
+```bash
+npm test
+```
