@@ -7,27 +7,22 @@ function buildRemoteError(code, cause) {
   return error;
 }
 
-export async function evaluateDiagnosticRemote(payload, { fetchImpl = globalThis.fetch } = {}) {
-  if (typeof fetchImpl !== 'function') {
-    throw buildRemoteError('REMOTE_FETCH_UNAVAILABLE');
+export async function evaluateDiagnosticRemote(payload) {
+  const response = await fetch('/api/diagnostic/evaluate', {
+    method: 'POST', // 🔥 ESSENCIAL
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`HTTP ${response.status} - ${text}`);
   }
 
-  let response;
-  try {
-    response = await fetchImpl('/api/diagnostic/evaluate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-  } catch (error) {
-    throw buildRemoteError('REMOTE_REQUEST_FAILED', error);
-  }
-
-  if (!response?.ok) {
-    throw buildRemoteError('REMOTE_HTTP_ERROR', { status: response?.status ?? null });
-  }
+  return response.json();
+}
 
   let data;
   try {
