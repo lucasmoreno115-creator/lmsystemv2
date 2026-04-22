@@ -23,6 +23,7 @@ export function createEvaluateHandler(dependencies = {}) {
       const body = await context.request.json();
       const normalizedPayload = validatePayload(body);
       const evaluation = evaluate(normalizedPayload);
+
       const { leadId } = await persist({
         dbBinding: context.env?.DB,
         normalizedPayload,
@@ -30,29 +31,21 @@ export function createEvaluateHandler(dependencies = {}) {
       });
 
       return jsonResponse(buildResponse({ leadId, evaluation }));
-   catch (error) {
-  console.error("🔥 ERRO REAL:", error);
 
-  return Response.json(
-    {
-      ok: false,
-      error: {
-        code: "INTERNAL_ERROR",
-        message: error?.message || "Erro interno",
-        stack: error?.stack || null
-      }
-    },
-    { status: 500 }
-  );
-}
-      console.error('[Diagnostic API] Erro ao processar diagnóstico:', error);
-      return jsonResponse({
-        ok: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'Não foi possível processar o diagnóstico.'
-        }
-      }, 500);
+    } catch (error) {
+      console.error("🔥 ERRO REAL:", error);
+
+      return jsonResponse(
+        {
+          ok: false,
+          error: {
+            code: "INTERNAL_ERROR",
+            message: error?.message || "Erro interno",
+            stack: error?.stack || null
+          }
+        },
+        500
+      );
     }
   };
 }
