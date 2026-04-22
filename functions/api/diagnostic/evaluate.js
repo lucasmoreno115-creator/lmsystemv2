@@ -30,17 +30,21 @@ export function createEvaluateHandler(dependencies = {}) {
       });
 
       return jsonResponse(buildResponse({ leadId, evaluation }));
-    } catch (error) {
-      if (error instanceof ValidationError || error?.code === 'INVALID_INPUT') {
-        return jsonResponse({
-          ok: false,
-          error: {
-            code: 'INVALID_INPUT',
-            message: 'Payload inválido.',
-            fields: error.fields ?? {}
-          }
-        }, 400);
+   catch (error) {
+  console.error("🔥 ERRO REAL DO BACKEND:", error);
+
+  return Response.json(
+    {
+      ok: false,
+      error: {
+        code: "INTERNAL_ERROR",
+        message: error?.message || "Erro interno",
+        stack: error?.stack || null
       }
+    },
+    { status: 500 }
+  );
+}
 
       console.error('[Diagnostic API] Erro ao processar diagnóstico:', error);
       return jsonResponse({
