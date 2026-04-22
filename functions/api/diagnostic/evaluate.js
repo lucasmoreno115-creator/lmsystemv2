@@ -31,7 +31,7 @@ export function createEvaluateHandler(dependencies = {}) {
 
       return jsonResponse(buildResponse({ leadId, evaluation }));
    catch (error) {
-  console.error("🔥 ERRO REAL DO BACKEND:", error);
+  console.error("🔥 ERRO REAL:", error);
 
   return Response.json(
     {
@@ -45,7 +45,6 @@ export function createEvaluateHandler(dependencies = {}) {
     { status: 500 }
   );
 }
-
       console.error('[Diagnostic API] Erro ao processar diagnóstico:', error);
       return jsonResponse({
         ok: false,
