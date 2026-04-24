@@ -26,11 +26,7 @@ export function createEvaluateHandler(deps = {}) {
       const body = await request.json();
       const normalizedPayload = validatePayload(body);
       const evaluation = evaluate(normalizedPayload);
-      const { leadId } = await persist({
-        dbBinding: env?.DB,
-        normalizedPayload,
-        evaluation
-      });
+     const leadId = 'debug-no-db';
 
       return jsonResponse(buildResponse({ leadId, evaluation }), 200);
     } catch (error) {
