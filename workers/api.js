@@ -2,19 +2,58 @@ import { createEvaluateHandler } from '../src/server/diagnostic/evaluateEndpoint
 
 const evaluateHandler = createEvaluateHandler();
 
-function withCors(response, origin = '*') {
-  const headers = new Headers(response.headers);
-  headers.set('Access-Control-Allow-Origin', origin);
-  headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  headers.set('Access-Control-Allow-Headers', 'Content-Type');
-  headers.set('Vary', 'Origin');
-
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers
+function json(payload, status = 200, extraHeaders = {}) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      ...extraHeaders
+    }
   });
 }
+
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+
+    if (url.pathname !== '/api/diagnostic/evaluate') {
+      return json({
+        ok: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Not found.'
+        }
+      }, 404);
+    }
+
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 204,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type'
+        }
+      });
+    }
+
+    if (request.method !== 'POST') {
+      return json({
+        ok: false,
+        error: {
+          code: 'METHOD_NOT_ALLOWED',
+          message: 'Method not allowed.'
+        }
+      }, 405);
+    }
+
+    return evaluateHandler({ request, env, ctx });
+  }
+};
 
 function resolveAllowedOrigin(request) {
   return request.headers.get('Origin') || '*';
