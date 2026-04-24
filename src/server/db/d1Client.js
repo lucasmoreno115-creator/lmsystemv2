@@ -4,6 +4,7 @@ export function createD1Client(dbBinding) {
   }
 
   return {
+<<<<<<< HEAD
     async ensureSchema() {
       if (typeof dbBinding.exec !== 'function') return;
 
@@ -51,6 +52,11 @@ export function createD1Client(dbBinding) {
         CREATE INDEX IF NOT EXISTS idx_leads_whatsapp
         ON leads (whatsapp);
       `);
+=======
+    // ❌ NÃO criar schema em runtime
+    async ensureSchema() {
+      return;
+>>>>>>> 8d70a70 (fix: stabilize backend and D1)
     },
 
     async run(sql, ...params) {
@@ -58,4 +64,8 @@ export function createD1Client(dbBinding) {
       return statement.bind(...params).run();
     }
   };
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 8d70a70 (fix: stabilize backend and D1)

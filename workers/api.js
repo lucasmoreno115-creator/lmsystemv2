@@ -59,4 +59,8 @@ export default {
     const response = await evaluateHandler({ request, env, ctx });
     return withCors(response, origin);
   }
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> 8d70a70 (fix: stabilize backend and D1)
