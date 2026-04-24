@@ -49,16 +49,16 @@ export function createEvaluateHandler(deps = {}) {
       }
 
       console.error('[diagnostic/evaluate] unexpected error', error);
-      return jsonResponse(
-        {
-          ok: false,
-          error: {
-            code: 'INTERNAL_ERROR',
-            message: 'Não foi possível processar o diagnóstico.'
-          }
-        },
-        500
-      );
+console.error('[diagnostic/evaluate] stack', error?.stack);
+
+return jsonResponse(
+  {
+    ok: false,
+    error: {
+      code: 'INTERNAL_ERROR',
+      message: error?.message || 'Não foi possível processar o diagnóstico.',
+      stack: error?.stack || null
     }
-  };
-}
+  },
+  500
+);
