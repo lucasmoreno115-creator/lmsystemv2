@@ -5,7 +5,7 @@ compatibility_date = "2024-01-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "lm_system"
-database_id = "SEU_DATABASE_ID"
+database_id = "1de90532-157b-473e-8e7a-655ca9e0953d"
 
 routes = [
   { pattern = "seudominio.com/api/*", zone_name = "seudominio.com" }
