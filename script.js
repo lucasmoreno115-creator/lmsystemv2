@@ -44,11 +44,12 @@ formElement.addEventListener('submit', async (event) => {
 
     const result = await processLeadSubmission({ formElement, db });
 
-    const strategic = renderResult(resultCard, result);
-    trackEvent('result_rendered', {
-      lmScore: result.lmScore,
-      classification: result.classification
-    });
+    function showResult(result) {
+  const score = result.data.lmScore;
+  const classification = result.data.classification;
+
+  console.log(score, classification);
+});
     trackEvent('result_experiment_assigned', buildResultExperimentAssignedPayload(strategic));
     trackEvent('result_viewed', buildResultViewedPayload({ strategic, result }));
     trackEvent('lead_submit_success', {
