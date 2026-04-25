@@ -1,27 +1,29 @@
 export function adaptRemoteDiagnosticResult({ remoteResponse, userInput }) {
-  const r = remoteResponse.result;
+  if (!remoteResponse || !remoteResponse.data) {
+    throw new Error('Resposta da API inválida');
+  }
+
+  const { lmScore, classification, leadId } = remoteResponse.data;
 
   return {
-    lmScore: r.lmScore,
-    classification: r.classification,
-    tags: r.tags,
+    lmScore,
+    classification,
+    leadId,
+
     goal: userInput.goal,
-    profile: r.dimensions,
-    strategicResult: r.strategicResult,
-    leadId: remoteResponse.leadId,
-    engineVersion: remoteResponse.engineVersion,
+
+    tags: [],
+    profile: {},
+    ctaHref: './planos.html',
+
     leadPayload: {
       name: userInput.name,
       email: userInput.email,
       whatsapp: userInput.whatsapp,
       goal: userInput.goal,
-      lmScore: r.lmScore,
-      classification: r.classification,
-      tags: r.tags,
-      dimensions: r.dimensions,
-      recommendedOffer: r.recommendedOffer,
-      clientState: r.clientState,
-      leadPriority: r.leadPriority
+      lmScore,
+      classification,
+      recommendedOffer: 'CONSULTORIA'
     }
   };
 }
