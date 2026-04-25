@@ -54,7 +54,7 @@ export function createEvaluateHandler(deps = {}) {
         ok: false,
         error: {
           code: 'INTERNAL_ERROR',
-          message: error?.message || 'Não foi possível processar o diagnóstico.'
+          message: 'Não foi possível processar o diagnóstico.'
         }
       }, 500);
     }
