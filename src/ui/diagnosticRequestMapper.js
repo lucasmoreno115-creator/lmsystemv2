@@ -7,17 +7,14 @@ export function mapUserInputToDiagnosticRequest(userInput, { variant = null } = 
       goal: userInput.goal
     },
     answers: {
-      trainingFrequency: userInput.trainingFrequency,
-      trainingExperience: userInput.trainingExperience,
-      sleepQuality: userInput.sleepQuality,
-      stressLevel: userInput.stressLevel,
-      painInjury: userInput.painInjury,
-      nutritionConsistency: userInput.foodAdherence,
-      foodAdherence: userInput.foodAdherence,
-      routineStability: userInput.consistencyHistory,
-      consistencyHistory: userInput.consistencyHistory,
-      motivation: userInput.motivationLevel,
-      motivationLevel: userInput.motivationLevel
+      trainingFrequency: Number(userInput.trainingFrequency),
+      trainingExperience: Number(userInput.trainingExperience),
+      foodAdherence: Number(userInput.foodAdherence),
+      sleepQuality: Number(userInput.sleepQuality),
+      stressLevel: Number(userInput.stressLevel),
+      painInjury: Number(userInput.painInjury),
+      consistencyHistory: Number(userInput.consistencyHistory),
+      motivationLevel: Number(userInput.motivationLevel)
     },
     meta: {
       source: 'diagnostic_form',
