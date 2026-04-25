@@ -24,42 +24,6 @@ export function createEvaluateHandler(deps = {}) {
   return async function evaluateHandler({ request, env }) {
     try {
       const body = await request.json();
-<<<<<<< HEAD
-      const normalizedPayload = validatePayload(body);
-      const evaluation = evaluate(normalizedPayload);
-     const leadId = 'debug-no-db';
-
-      return jsonResponse(buildResponse({ leadId, evaluation }), 200);
-    } catch (error) {
-      if (error instanceof ValidationError) {
-        return jsonResponse(
-          {
-            ok: false,
-            error: {
-              code: error.code,
-              message: error.message,
-              fields: error.fields
-            }
-          },
-          400
-        );
-      }
-
-      console.error('[diagnostic/evaluate] unexpected error', error);
-console.error('[diagnostic/evaluate] stack', error?.stack);
-
-return jsonResponse(
-  {
-    ok: false,
-    error: {
-      code: 'INTERNAL_ERROR',
-      message: error?.message || 'Não foi possível processar o diagnóstico.',
-      stack: error?.stack || null
-    }
-  },
-  500
-);
-=======
 
       const normalizedPayload = validatePayload(body);
       const evaluation = evaluate(normalizedPayload);
@@ -85,17 +49,14 @@ return jsonResponse(
       }
 
       console.error('[diagnostic/evaluate] unexpected error', error);
-      console.error('[diagnostic/evaluate] stack', error?.stack);
 
       return jsonResponse({
         ok: false,
         error: {
           code: 'INTERNAL_ERROR',
-          message: error?.message || 'Não foi possível processar o diagnóstico.',
-          stack: error?.stack || null
+          message: error?.message || 'Não foi possível processar o diagnóstico.'
         }
       }, 500);
     }
   };
 }
->>>>>>> 8d70a70 (fix: stabilize backend and D1)
