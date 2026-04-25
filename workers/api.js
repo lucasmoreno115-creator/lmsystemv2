@@ -75,7 +75,7 @@ export default {
       return jsonError("NOT_FOUND", "Rota não encontrada", 404, corsHeaders);
 
     } catch (err) {
-      console.error("ERROR:", err);
+      console.error("ERROR FULL:", JSON.stringify(err, null, 2));
 
       return jsonError(
         "INTERNAL_ERROR",
