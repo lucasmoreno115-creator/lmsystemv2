@@ -2,10 +2,8 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // LOG DE VERSÃO (debug)
-    console.log("LM API VERSION: CLEAN-2026-04-25");
+    console.log("LM API VERSION: FINAL-2026-04-25");
 
-    // CORS
     const corsHeaders = {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
@@ -13,12 +11,13 @@ export default {
       "Access-Control-Allow-Headers": "Content-Type",
     };
 
-    // OPTIONS (preflight)
+    // CORS preflight
     if (request.method === "OPTIONS") {
       return new Response(null, { headers: corsHeaders });
     }
 
     try {
+
       // =========================
       // HEALTH CHECK
       // =========================
@@ -26,7 +25,7 @@ export default {
         return new Response(JSON.stringify({
           ok: true,
           status: "ok",
-          version: "CLEAN-2026-04-25",
+          version: "FINAL-2026-04-25",
           timestamp: new Date().toISOString()
         }), { headers: corsHeaders });
       }
@@ -34,95 +33,89 @@ export default {
       // =========================
       // DIAGNOSTIC EVALUATE
       // =========================
-      const now = new Date().toISOString();
+      if (request.method === "POST" && url.pathname === "/api/diagnostic/evaluate") {
 
-// 1. inserir lead
-const leadInsert = await env.DB.prepare(`
-  INSERT INTO leads (id, name, email, whatsapp, goal, created_at)
-  VALUES (?, ?, ?, ?, ?, ?)
-`)
-.bind(
-  crypto.randomUUID(),
-  body.lead.name,
-  body.lead.email,
-  body.lead.whatsapp,
-  body.lead.goal,
-  now
-)
-.run();
+        const body = await safeJson(request);
 
-const leadId = leadInsert.meta.last_row_id;
-
-// 2. dados mínimos válidos
-const lmScore = 65;
-const classification = "EM_EVOLUCAO";
-
-// 3. inserir resultado
-await env.DB.prepare(`
-  INSERT INTO diagnostic_results (
-    id,
-    lead_id,
-    engine_version,
-    lm_score,
-    classification,
-    dimensions_json,
-    tags_json,
-    client_state,
-    recommended_offer,
-    lead_priority,
-    strategic_result_json,
-    raw_answers_json,
-    meta_json,
-    created_at
-  )
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-`)
-.bind(
-  crypto.randomUUID(),
-  leadId,
-  "v1.0",
-  lmScore,
-  classification,
-  JSON.stringify({ training: 3, nutrition: 3 }),
-  JSON.stringify(["low_consistency"]),
-  "EM_EVOLUCAO",
-  "CONSULTORIA",
-  "medium",
-  JSON.stringify({ summary: "ok" }),
-  JSON.stringify(body.answers),
-  JSON.stringify({ source: "api" }),
-  now
-)
-.run();
-
-        // Validação básica
+        // VALIDAÇÃO
         const validationError = validateDiagnostic(body);
         if (validationError) {
           return jsonError("VALIDATION_ERROR", validationError, 400, corsHeaders);
         }
 
-        // Simples lógica de score (placeholder realista)
-        const score = calculateScore(body);
+        const now = new Date().toISOString();
 
-        // Persistência no D1
+        // =========================
+        // 1. INSERIR LEAD
+        // =========================
+        const leadId = crypto.randomUUID();
+
         await env.DB.prepare(`
-          INSERT INTO diagnostic_results (name, goal, score, created_at)
-          VALUES (?, ?, ?, ?)
+          INSERT INTO leads (id, name, email, whatsapp, goal, created_at)
+          VALUES (?, ?, ?, ?, ?, ?)
         `)
-          .bind(
-            body.name,
-            body.goal,
-            score,
-            new Date().toISOString()
+        .bind(
+          leadId,
+          body.lead.name,
+          body.lead.email,
+          body.lead.whatsapp,
+          body.lead.goal,
+          now
+        )
+        .run();
+
+        // =========================
+        // 2. CALCULAR SCORE (placeholder)
+        // =========================
+        const lmScore = calculateScore(body);
+        const classification = classifyScore(lmScore);
+
+        // =========================
+        // 3. INSERIR DIAGNOSTIC RESULT
+        // =========================
+        await env.DB.prepare(`
+          INSERT INTO diagnostic_results (
+            id,
+            lead_id,
+            engine_version,
+            lm_score,
+            classification,
+            dimensions_json,
+            tags_json,
+            client_state,
+            recommended_offer,
+            lead_priority,
+            strategic_result_json,
+            raw_answers_json,
+            meta_json,
+            created_at
           )
-          .run();
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `)
+        .bind(
+          crypto.randomUUID(),
+          leadId,
+          "v1.0",
+          lmScore,
+          classification,
+          JSON.stringify(buildDimensions(body)),
+          JSON.stringify(buildTags(body)),
+          classification,
+          recommendOffer(lmScore),
+          "medium",
+          JSON.stringify({ summary: "diagnóstico gerado" }),
+          JSON.stringify(body.answers),
+          JSON.stringify({ source: "api" }),
+          now
+        )
+        .run();
 
         return new Response(JSON.stringify({
           ok: true,
           data: {
-            name: body.name,
-            goal: body.goal,
-            score
+            leadId,
+            lmScore,
+            classification
           }
         }), { headers: corsHeaders });
       }
@@ -159,20 +152,61 @@ async function safeJson(request) {
 
 function validateDiagnostic(body) {
   if (!body) return "Body vazio";
-  if (!body.name) return "Nome é obrigatório";
-  if (!body.goal) return "Objetivo é obrigatório";
+  if (!body.lead) return "Lead obrigatório";
+  if (!body.lead.name) return "Nome é obrigatório";
+  if (!body.lead.email) return "Email é obrigatório";
+  if (!body.lead.whatsapp) return "Whatsapp é obrigatório";
+  if (!body.lead.goal) return "Objetivo é obrigatório";
+  if (!body.answers) return "Answers obrigatório";
   return null;
 }
 
 function calculateScore(body) {
-  // lógica simples (substituível depois)
-  let base = 50;
+  const a = body.answers;
 
-  if (body.goal === "recomp") base += 10;
-  if (body.goal === "cut") base -= 5;
-  if (body.goal === "mass") base += 15;
+  let score =
+    a.trainingFrequency * 5 +
+    a.trainingExperience * 5 +
+    a.foodAdherence * 10 +
+    a.sleepQuality * 10 +
+    (6 - a.stressLevel) * 5 +
+    (6 - a.painInjury) * 5 +
+    a.consistencyHistory * 10 +
+    a.motivationLevel * 10;
 
-  return Math.min(100, Math.max(0, base));
+  return Math.max(0, Math.min(100, score));
+}
+
+function classifyScore(score) {
+  if (score < 40) return "BASE_EM_CONSTRUCAO";
+  if (score < 60) return "EM_EVOLUCAO";
+  if (score < 80) return "BOA_BASE";
+  return "NIVEL_AVANCADO";
+}
+
+function buildDimensions(body) {
+  return {
+    training: body.answers.trainingFrequency,
+    nutrition: body.answers.foodAdherence,
+    recovery: body.answers.sleepQuality,
+    stress: body.answers.stressLevel
+  };
+}
+
+function buildTags(body) {
+  const tags = [];
+
+  if (body.answers.consistencyHistory <= 2) tags.push("low_consistency");
+  if (body.answers.motivationLevel >= 4) tags.push("high_motivation");
+  if (body.answers.painInjury >= 3) tags.push("pain_attention");
+
+  return tags;
+}
+
+function recommendOffer(score) {
+  if (score < 50) return "PLANO_BASE";
+  if (score < 75) return "CONSULTORIA_ONLINE";
+  return "CONSULTORIA_PREMIUM";
 }
 
 function jsonError(code, message, status, headers) {
