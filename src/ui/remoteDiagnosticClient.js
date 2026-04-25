@@ -1,63 +1,25 @@
-const FRIENDLY_REMOTE_ERROR = 'Não foi possível processar seu diagnóstico agora. Tente novamente em instantes.';
-
-function buildRemoteError(code, cause) {
-  const error = new Error(FRIENDLY_REMOTE_ERROR);
-  error.code = code;
-  error.cause = cause;
-  return error;
-}
-
-function resolveApiBase() {
-  const metaBase = document.querySelector('meta[name="lm-api-base"]')?.content?.trim();
-  const globalBase = window.__LM_API_BASE__?.trim();
-
-  return globalBase || metaBase || window.location.origin;
-}
-
-export async function evaluateDiagnosticRemote(payload) {
 const API_URL = "https://lm-system-api.lucasmoreno115.workers.dev";
 
 export async function evaluateDiagnosticRemote(payload) {
-  const response = await fetch(`${API_URL}/api/diagnostic/evaluate`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload)
-  });
-
-  const result = await response.json();
-
-  if (!response.ok) {
-    throw result;
-  }
-
-  return result;
-}
-  } catch (error) {
-    throw buildRemoteError('NETWORK_ERROR', error);
-  }
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw buildRemoteError(`HTTP_${response.status}`, text);
-  }
-
-  let data;
   try {
-    data = await response.json();
+    const response = await fetch(`${API_URL}/api/diagnostic/evaluate`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data?.error?.message || "Erro na API");
+    }
+
+    return data;
+
   } catch (error) {
-    throw buildRemoteError('REMOTE_INVALID_JSON', error);
+    console.error("REMOTE ERROR:", error);
+    throw new Error("Não foi possível processar seu diagnóstico agora.");
   }
-
-  if (!data || data.ok !== true || !data.result) {
-    throw buildRemoteError('REMOTE_INVALID_RESPONSE', data);
-  }
-
-  return {
-    ok: true,
-    leadId: data.leadId ?? null,
-    engineVersion: data.engineVersion ?? null,
-    result: data.result
-  };
 }
