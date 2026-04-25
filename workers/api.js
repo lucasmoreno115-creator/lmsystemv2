@@ -1,63 +1,125 @@
-console.log("LM API VERSION: CLEAN-2026-04-25");
-import { createEvaluateHandler } from '../src/server/diagnostic/evaluateEndpoint.js';
-
-const evaluateHandler = createEvaluateHandler();
-
-function withCors(response, origin = '*') {
-  const headers = new Headers(response.headers);
-  headers.set('Access-Control-Allow-Origin', origin);
-  headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  headers.set('Access-Control-Allow-Headers', 'Content-Type');
-
-  return new Response(response.body, {
-    status: response.status,
-    headers
-  });
-}
-
-function resolveAllowedOrigin(request) {
-  return request.headers.get('Origin') || '*';
-}
-
 export default {
-  async fetch(request, env, ctx) {
+  async fetch(request, env) {
     const url = new URL(request.url);
-    const origin = resolveAllowedOrigin(request);
 
-    if (url.pathname !== '/api/diagnostic/evaluate') {
-      return withCors(
-        new Response(JSON.stringify({
-          ok: false,
-          error: { code: 'NOT_FOUND', message: 'Not found.' }
-        }), {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' }
-        }),
-        origin
-      );
+    // LOG DE VERSÃO (debug)
+    console.log("LM API VERSION: CLEAN-2026-04-25");
+
+    // CORS
+    const corsHeaders = {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    };
+
+    // OPTIONS (preflight)
+    if (request.method === "OPTIONS") {
+      return new Response(null, { headers: corsHeaders });
     }
 
-    if (request.method === 'OPTIONS') {
-      return withCors(new Response(null, { status: 204 }), origin);
-    }
+    try {
+      // =========================
+      // HEALTH CHECK
+      // =========================
+      if (request.method === "GET" && url.pathname === "/api/health") {
+        return new Response(JSON.stringify({
+          ok: true,
+          status: "ok",
+          version: "CLEAN-2026-04-25",
+          timestamp: new Date().toISOString()
+        }), { headers: corsHeaders });
+      }
 
-    if (request.method !== 'POST') {
-      return withCors(
-        new Response(JSON.stringify({
-          ok: false,
-          error: { code: 'METHOD_NOT_ALLOWED', message: 'Use POST.' }
-        }), {
-          status: 405,
-          headers: {
-            'Content-Type': 'application/json',
-            Allow: 'POST, OPTIONS'
+      // =========================
+      // DIAGNOSTIC EVALUATE
+      // =========================
+      if (request.method === "POST" && url.pathname === "/api/diagnostic/evaluate") {
+        const body = await safeJson(request);
+
+        // Validação básica
+        const validationError = validateDiagnostic(body);
+        if (validationError) {
+          return jsonError("VALIDATION_ERROR", validationError, 400, corsHeaders);
+        }
+
+        // Simples lógica de score (placeholder realista)
+        const score = calculateScore(body);
+
+        // Persistência no D1
+        await env.DB.prepare(`
+          INSERT INTO diagnostic_results (name, goal, score, created_at)
+          VALUES (?, ?, ?, ?)
+        `)
+          .bind(
+            body.name,
+            body.goal,
+            score,
+            new Date().toISOString()
+          )
+          .run();
+
+        return new Response(JSON.stringify({
+          ok: true,
+          data: {
+            name: body.name,
+            goal: body.goal,
+            score
           }
-        }),
-        origin
+        }), { headers: corsHeaders });
+      }
+
+      // =========================
+      // NOT FOUND
+      // =========================
+      return jsonError("NOT_FOUND", "Rota não encontrada", 404, corsHeaders);
+
+    } catch (err) {
+      console.error("ERROR:", err);
+
+      return jsonError(
+        "INTERNAL_ERROR",
+        "Não foi possível processar o diagnóstico",
+        500,
+        corsHeaders
       );
     }
-
-    const response = await evaluateHandler({ request, env, ctx });
-    return withCors(response, origin);
   }
 };
+
+// =========================
+// HELPERS
+// =========================
+
+async function safeJson(request) {
+  try {
+    return await request.json();
+  } catch {
+    throw new Error("JSON inválido");
+  }
+}
+
+function validateDiagnostic(body) {
+  if (!body) return "Body vazio";
+  if (!body.name) return "Nome é obrigatório";
+  if (!body.goal) return "Objetivo é obrigatório";
+  return null;
+}
+
+function calculateScore(body) {
+  // lógica simples (substituível depois)
+  let base = 50;
+
+  if (body.goal === "recomp") base += 10;
+  if (body.goal === "cut") base -= 5;
+  if (body.goal === "mass") base += 15;
+
+  return Math.min(100, Math.max(0, base));
+}
+
+function jsonError(code, message, status, headers) {
+  return new Response(JSON.stringify({
+    ok: false,
+    error: { code, message }
+  }), { status, headers });
+}
