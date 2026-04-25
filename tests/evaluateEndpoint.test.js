@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { createEvaluateHandler } from '../functions/api/diagnostic/evaluate.js';
+import { createEvaluateHandler } from '../src/server/diagnostic/evaluateEndpoint.js';
 import { ValidationError } from '../src/server/diagnostic/diagnosticSchemas.js';
 
 test('endpoint returns real response shape and does not return mock fields', async () => {

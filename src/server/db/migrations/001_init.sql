@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS leads (
+CREATE TABLE leads (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   email TEXT NOT NULL,
@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS leads (
   created_at TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS diagnostic_results (
+CREATE TABLE diagnostic_results (
   id TEXT PRIMARY KEY,
   lead_id TEXT NOT NULL,
   engine_version TEXT,

@@ -1,3 +1,4 @@
+console.log("LM API VERSION: CLEAN-2026-04-25");
 import { createEvaluateHandler } from '../src/server/diagnostic/evaluateEndpoint.js';
 
 const evaluateHandler = createEvaluateHandler();

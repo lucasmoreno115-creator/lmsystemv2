@@ -9,13 +9,12 @@ Sistema de diagnóstico com frontend estático em Cloudflare Pages e API isolada
 - **Banco**: D1 vinculado no Worker via binding `DB`.
 - **Contrato de resposta**: `{ ok, leadId, engineVersion, result }`.
 
-> Decisão: separar API em Worker dedicado para evitar ambiguidades de roteamento do Pages Functions (ex.: `405 Method Not Allowed` quando o path cai em asset). Isso elimina comportamento inconsistente entre local e produção.
+> Decisão: adotar arquitetura **Worker-first** e remover completamente Pages Functions para eliminar ambiguidades de runtime e evitar execução de código antigo.
 
 ## Estrutura final de pastas
 
 ```text
-/functions/api/diagnostic/evaluate.js   # compat local/pages
-/workers/api.js                         # API de produção (Worker dedicado)
+/workers/api.js                         # único backend em produção e desenvolvimento
 /src/server/diagnostic/evaluateEndpoint.js
 /src/server/diagnostic/diagnosticPersistence.js
 /src/server/db/d1Client.js
@@ -82,13 +81,25 @@ Depois:
 wrangler deploy
 ```
 
+## Build/deploy limpo (sem cache fantasma)
+
+```bash
+rm -rf node_modules
+rm -rf .wrangler
+npm install
+wrangler deploy
+```
+
 ## Validação pós-deploy (checklist)
 
+- [ ] `/functions` não existe mais.
+- [ ] Busca global por inicialização de schema em runtime retorna vazio.
+- [ ] Migrações SQL não usam criação condicional de tabela.
+- [ ] `wrangler deploy` executa sem erro.
+- [ ] `wrangler tail` mostra `LM API VERSION: CLEAN-2026-04-25`.
 - [ ] `POST /api/diagnostic/evaluate` retorna `200` com `{ ok, leadId, engineVersion, result }`.
 - [ ] `GET /api/diagnostic/evaluate` retorna `405`.
-- [ ] Registro gravado em `leads` e `diagnostic_results` no D1.
-- [ ] Frontend em produção conclui fluxo completo sem fallback local.
-- [ ] Logs do Worker sem erros de validação/persistência inesperados.
+- [ ] D1 executa queries sem erro para `leads` e `diagnostic_results`.
 
 ## Testes
 
