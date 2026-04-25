@@ -7,11 +7,13 @@ import { renderResult } from './src/ui/resultRenderer.js';
 import { trackEvent } from './src/ui/telemetry.js';
 import {
   buildResultViewedPayload,
-  buildResultCtaClickedPayload,
-  buildResultExperimentAssignedPayload
+  buildResultCtaClickedPayload
 } from './src/ui/resultTelemetry.js';
 import { saveCoachSnapshot } from './src/coach/coachStorage.js';
 
+// =========================
+// FIREBASE
+// =========================
 const firebaseConfig = {
   apiKey: "AIzaSyBgrhvvz2ZEgUQruCiY4HNgg7AziWEGyfU",
   authDomain: "lm-system-1f7db.firebaseapp.com",
@@ -20,12 +22,20 @@ const firebaseConfig = {
 };
 
 const { db } = createFirebaseClients(firebaseConfig);
+
+// =========================
+// ELEMENTOS
+// =========================
 const formElement = document.querySelector('#lead-form');
 const submitButton = document.querySelector('#submit-btn');
 const errorContainer = document.querySelector('#form-error');
 const resultCard = document.querySelector('#result-card');
+
 const submitGuard = createSubmitGuard();
 
+// =========================
+// CTA DO RESULTADO
+// =========================
 resultCard.addEventListener('click', (event) => {
   if (!(event.target instanceof HTMLElement)) return;
   if (!event.target.classList.contains('result-cta-button')) return;
@@ -33,6 +43,9 @@ resultCard.addEventListener('click', (event) => {
   trackEvent('result_cta_clicked', buildResultCtaClickedPayload(event.target));
 });
 
+// =========================
+// SUBMIT PRINCIPAL
+// =========================
 formElement.addEventListener('submit', async (event) => {
   event.preventDefault();
   errorContainer.textContent = '';
@@ -40,22 +53,24 @@ formElement.addEventListener('submit', async (event) => {
   try {
     submitGuard.lock();
     setLoading(submitButton, true);
+
     trackEvent('lead_submit_started');
 
+    // 🔥 PROCESSAMENTO COMPLETO (API + fallback + mapper)
     const result = await processLeadSubmission({ formElement, db });
 
-    function showResult(result) {
-  const score = result.data.lmScore;
-  const classification = result.data.classification;
+    // 🔥 RENDER CORRETO (já adaptado internamente)
+    renderResult(resultCard, result);
 
-  console.log(score, classification);
-});
-    trackEvent('result_experiment_assigned', buildResultExperimentAssignedPayload(strategic));
-    trackEvent('result_viewed', buildResultViewedPayload({ strategic, result }));
+    // 🔥 TRACKING
+    trackEvent('result_viewed', buildResultViewedPayload({ result }));
+
     trackEvent('lead_submit_success', {
       lmScore: result.lmScore,
       offer: result.leadPayload?.recommendedOffer ?? null
     });
+
+    // 🔥 SNAPSHOT PARA COACH
     saveCoachSnapshot({
       result,
       input: result.leadPayload ? {
@@ -66,13 +81,19 @@ formElement.addEventListener('submit', async (event) => {
       } : null
     });
 
+    // 🔥 LIMPA FORM
     formElement.reset();
+
   } catch (error) {
+    console.error(error);
+
     errorContainer.textContent = mapErrorToMessage(error);
+
     trackEvent('lead_submit_error', {
       code: error?.code ?? null,
       message: error?.message ?? 'unknown_error'
     });
+
   } finally {
     setLoading(submitButton, false);
     submitGuard.release();
