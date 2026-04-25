@@ -34,8 +34,66 @@ export default {
       // =========================
       // DIAGNOSTIC EVALUATE
       // =========================
-      if (request.method === "POST" && url.pathname === "/api/diagnostic/evaluate") {
-        const body = await safeJson(request);
+      const now = new Date().toISOString();
+
+// 1. inserir lead
+const leadInsert = await env.DB.prepare(`
+  INSERT INTO leads (id, name, email, whatsapp, goal, created_at)
+  VALUES (?, ?, ?, ?, ?, ?)
+`)
+.bind(
+  crypto.randomUUID(),
+  body.lead.name,
+  body.lead.email,
+  body.lead.whatsapp,
+  body.lead.goal,
+  now
+)
+.run();
+
+const leadId = leadInsert.meta.last_row_id;
+
+// 2. dados mínimos válidos
+const lmScore = 65;
+const classification = "EM_EVOLUCAO";
+
+// 3. inserir resultado
+await env.DB.prepare(`
+  INSERT INTO diagnostic_results (
+    id,
+    lead_id,
+    engine_version,
+    lm_score,
+    classification,
+    dimensions_json,
+    tags_json,
+    client_state,
+    recommended_offer,
+    lead_priority,
+    strategic_result_json,
+    raw_answers_json,
+    meta_json,
+    created_at
+  )
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`)
+.bind(
+  crypto.randomUUID(),
+  leadId,
+  "v1.0",
+  lmScore,
+  classification,
+  JSON.stringify({ training: 3, nutrition: 3 }),
+  JSON.stringify(["low_consistency"]),
+  "EM_EVOLUCAO",
+  "CONSULTORIA",
+  "medium",
+  JSON.stringify({ summary: "ok" }),
+  JSON.stringify(body.answers),
+  JSON.stringify({ source: "api" }),
+  now
+)
+.run();
 
         // Validação básica
         const validationError = validateDiagnostic(body);
