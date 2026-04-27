@@ -1,170 +1,160 @@
 <!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Escolha seu plano | Método LM</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LM System | Planos</title>
+    <link rel="icon" type="image/png" href="./favicon.png" />
+    <link rel="stylesheet" href="./style.css" />
+    <style>
+      .plans-header {
+        margin-top: 8px;
+      }
+      .plans-header h1 {
+        margin: 4px 0 8px;
+        font-size: 1.5rem;
+        line-height: 1.25;
+      }
+      .plans-header p {
+        margin: 0;
+        color: var(--muted);
+      }
+      .plans-grid {
+        display: grid;
+        gap: 12px;
+        margin-top: 16px;
+      }
+      .plan-card {
+        background: #111111;
+        border: 1px solid #2d2d2d;
+        border-radius: 14px;
+        padding: 14px;
+      }
+      .plan-card.featured {
+        border-color: #5e4f22;
+        background: linear-gradient(180deg, #1a1710 0%, #111111 100%);
+        box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.2);
+      }
+      .plan-label {
+        display: inline-block;
+        color: #0f0f0f;
+        background: #464646;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 0.78rem;
+        font-weight: 700;
+      }
+      .plan-card.featured .plan-label {
+        background: var(--accent);
+      }
+      .plan-name {
+        margin: 10px 0 6px;
+        font-size: 1.2rem;
+      }
+      .plan-copy,
+      .plan-final {
+        color: #d6d6d6;
+        margin: 0;
+        line-height: 1.45;
+      }
+      .plan-list {
+        margin: 12px 0;
+        padding-left: 18px;
+        color: #ececec;
+        display: grid;
+        gap: 6px;
+      }
+      .plan-button {
+        margin-top: 12px;
+        display: block;
+        text-decoration: none;
+        text-align: center;
+        background: #343434;
+        color: #ffffff;
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-weight: 700;
+      }
+      .plan-card.featured .plan-button {
+        background: var(--accent);
+        color: #0f0f0f;
+      }
+      .final-message {
+        text-align: center;
+        margin-top: 18px;
+        color: #f2f2f2;
+        font-weight: 600;
+      }
+      @media (min-width: 860px) {
+        .plans-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="plans-header">
+        <p class="eyebrow">LM System</p>
+        <h1>Escolha o formato ideal para transformar seu diagnóstico em um plano claro de ação</h1>
+        <p>Treino, estratégia e acompanhamento no nível certo para o seu momento.</p>
+      </header>
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial;
-      background: #0a0a0a;
-      color: #fff;
-    }
+      <section class="plans-grid" aria-label="Planos LM System">
+        <article class="plan-card">
+          <span class="plan-label">Plano inicial</span>
+          <h2 class="plan-name">LM Start 30</h2>
+          <p class="plan-copy">Para quem quer começar certo com um plano personalizado e direto ao ponto</p>
+          <ul class="plan-list">
+            <li>Treino personalizado</li>
+            <li>Plano alimentar individualizado</li>
+            <li>Estratégia inicial para 30 dias</li>
+            <li>1 sessão de orientação</li>
+          </ul>
+          <p class="plan-final">Ideal para você se: quer direção, mas consegue executar sozinho.</p>
+          <a class="plan-button" data-plan="LM Start 30" href="#">Quero meu plano inicial</a>
+        </article>
 
-    .container {
-      max-width: 900px;
-      margin: auto;
-      padding: 30px 20px;
-    }
+        <article class="plan-card featured">
+          <span class="plan-label">Mais recomendado</span>
+          <h2 class="plan-name">LM Premium Coach</h2>
+          <p class="plan-copy">Para quem quer acompanhamento, ajustes e mais consistência no processo</p>
+          <ul class="plan-list">
+            <li>Tudo do plano inicial</li>
+            <li>Acompanhamento semanal</li>
+            <li>Ajustes contínuos</li>
+            <li>Suporte direto</li>
+          </ul>
+          <p class="plan-final">Ideal para você se: já sabe que sozinho começa bem, mas não mantém.</p>
+          <a class="plan-button" data-plan="LM Premium Coach" href="#">Quero acompanhamento completo</a>
+        </article>
 
-    h1 {
-      text-align: center;
-      margin-bottom: 10px;
-    }
+        <article class="plan-card">
+          <span class="plan-label">Correção técnica ao vivo</span>
+          <h2 class="plan-name">LM Presencial Pro</h2>
+          <p class="plan-copy">Para quem quer correção técnica ao vivo e mais segurança na execução</p>
+          <ul class="plan-list">
+            <li>Avaliação física e postural</li>
+            <li>Correção de execução</li>
+            <li>Sessão guiada presencial</li>
+            <li>Ajustes técnicos imediatos</li>
+          </ul>
+          <p class="plan-final">Ideal para você se: quer treinar com mais precisão, segurança e acompanhamento ao vivo.</p>
+          <a class="plan-button" data-plan="LM Presencial Pro" href="#">Quero agendar avaliação</a>
+        </article>
+      </section>
 
-    .subtitle {
-      text-align: center;
-      color: #aaa;
-      margin-bottom: 30px;
-    }
+      <p class="final-message">Você não precisa de mais informação. Precisa do próximo passo certo.</p>
+    </main>
+    <script type="module">
+      import { saveSelectedPlan } from './src/coach/coachStorage.js';
 
-    .highlight-box {
-      background: #121212;
-      border: 1px solid #333;
-      border-radius: 12px;
-      padding: 15px;
-      margin-bottom: 30px;
-      text-align: center;
-    }
-
-    .plans {
-      display: grid;
-      gap: 20px;
-    }
-
-    .plan {
-      background: #121212;
-      border: 1px solid #222;
-      border-radius: 14px;
-      padding: 20px;
-    }
-
-    .highlight {
-      border: 2px solid #d4af37;
-    }
-
-    h2 {
-      margin-top: 0;
-      color: #d4af37;
-    }
-
-    ul {
-      padding-left: 18px;
-      line-height: 1.6;
-    }
-
-    .price {
-      font-size: 22px;
-      margin: 15px 0;
-      font-weight: bold;
-    }
-
-    .btn {
-      display: block;
-      text-align: center;
-      padding: 14px;
-      background: #d4af37;
-      color: #000;
-      border-radius: 10px;
-      text-decoration: none;
-      font-weight: bold;
-      margin-top: 10px;
-    }
-
-    .btn.secondary {
-      background: #222;
-      color: #fff;
-    }
-  </style>
-</head>
-
-<body>
-
-<div class="container">
-
-  <h1>Agora é escolher o seu próximo passo</h1>
-  <p class="subtitle">
-    O seu diagnóstico mostrou exatamente onde você precisa agir.  
-    Agora você decide como quer avançar.
-  </p>
-
-  <div class="highlight-box">
-    👉 Sem promessas falsas. Aqui você tem estratégia, execução e resultado.
-  </div>
-
-  <div class="plans">
-
-    <!-- PLANO 1 -->
-    <div class="plan">
-      <h2>Plano Estruturado</h2>
-      <p>Ideal para começar com direção clara.</p>
-
-      <ul>
-        <li>Treino personalizado</li>
-        <li>Plano alimentar estruturado</li>
-        <li>Estratégia inicial</li>
-        <li>1 atendimento para dúvidas</li>
-      </ul>
-
-      <div class="price">R$ 47,90</div>
-
-      <a class="btn" href="https://wa.me/55SEUNUMERO?text=Quero%20começar%20com%20o%20Plano%20Estruturado">
-        Começar agora
-      </a>
-    </div>
-
-    <!-- PLANO 2 -->
-    <div class="plan highlight">
-      <h2>Consultoria Premium</h2>
-      <p>Para quem quer resultado com acompanhamento real.</p>
-
-      <ul>
-        <li>Treino + dieta ajustados constantemente</li>
-        <li>Acompanhamento semanal</li>
-        <li>Correção de estratégia</li>
-        <li>Suporte direto</li>
-      </ul>
-
-      <div class="price">Mais procurado</div>
-
-      <a class="btn" href="https://wa.me/5514991174500?text=Quero%20a%20Consultoria%20Premium">
-        Quero acompanhamento
-      </a>
-    </div>
-
-    <!-- PLANO 3 -->
-    <div class="plan">
-      <h2>Atendimento Presencial</h2>
-      <p>Para quem quer acelerar ao máximo.</p>
-
-      <ul>
-        <li>Avaliação física completa</li>
-        <li>Treino guiado</li>
-        <li>Correções ao vivo</li>
-      </ul>
-
-      <div class="price">A partir de R$ 250</div>
-
-      <a class="btn secondary" href="https://wa.me/55SEUNUMERO?text=Quero%20agendar%20avaliacao">
-        Agendar avaliação
-      </a>
-    </div>
-
-  </div>
-
-</div>
-
-</body>
+      const planButtons = document.querySelectorAll('.plan-button[data-plan]');
+      planButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          saveSelectedPlan(button.dataset.plan);
+        });
+      });
+    </script>
+  </body>
 </html>
