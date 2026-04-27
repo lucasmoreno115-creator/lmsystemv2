@@ -6,91 +6,153 @@
     <title>LM System | Planos</title>
     <link rel="icon" type="image/png" href="./favicon.png" />
     <link rel="stylesheet" href="./style.css" />
-    <style>
-      .plans-header {
-        margin-top: 8px;
-      }
-      .plans-header h1 {
-        margin: 4px 0 8px;
-        font-size: 1.5rem;
-        line-height: 1.25;
-      }
-      .plans-header p {
-        margin: 0;
-        color: var(--muted);
-      }
-      .plans-grid {
-        display: grid;
-        gap: 12px;
-        margin-top: 16px;
-      }
-      .plan-card {
-        background: #111111;
-        border: 1px solid #2d2d2d;
-        border-radius: 14px;
-        padding: 14px;
-      }
-      .plan-card.featured {
-        border-color: #5e4f22;
-        background: linear-gradient(180deg, #1a1710 0%, #111111 100%);
-        box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.2);
-      }
-      .plan-label {
-        display: inline-block;
-        color: #0f0f0f;
-        background: #464646;
-        border-radius: 999px;
-        padding: 4px 10px;
-        font-size: 0.78rem;
-        font-weight: 700;
-      }
-      .plan-card.featured .plan-label {
-        background: var(--accent);
-      }
-      .plan-name {
-        margin: 10px 0 6px;
-        font-size: 1.2rem;
-      }
-      .plan-copy,
-      .plan-final {
-        color: #d6d6d6;
-        margin: 0;
-        line-height: 1.45;
-      }
-      .plan-list {
-        margin: 12px 0;
-        padding-left: 18px;
-        color: #ececec;
-        display: grid;
-        gap: 6px;
-      }
-      .plan-button {
-        margin-top: 12px;
-        display: block;
-        text-decoration: none;
-        text-align: center;
-        background: #343434;
-        color: #ffffff;
-        border-radius: 10px;
-        padding: 10px 12px;
-        font-weight: 700;
-      }
-      .plan-card.featured .plan-button {
-        background: var(--accent);
-        color: #0f0f0f;
-      }
-      .final-message {
-        text-align: center;
-        margin-top: 18px;
-        color: #f2f2f2;
-        font-weight: 600;
-      }
-      @media (min-width: 860px) {
-        .plans-grid {
-          grid-template-columns: repeat(3, 1fr);
-        }
-      }
-    </style>
+   <style>
+  .plans-header {
+    margin-top: 12px;
+    text-align: center;
+  }
+
+  .plans-header h1 {
+    margin: 8px 0 14px;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    line-height: 1.15;
+    font-weight: 800;
+    max-width: 900px;
+  }
+
+  .plans-header p {
+    margin: 0 auto;
+    color: var(--muted);
+    max-width: 700px;
+    font-size: 1.05rem;
+    line-height: 1.6;
+  }
+
+  .plans-grid {
+    display: grid;
+    gap: 22px;
+    margin-top: 40px;
+  }
+
+  .plan-card {
+    background: linear-gradient(180deg, #111111 0%, #161616 100%);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 22px;
+    padding: 26px;
+    transition: 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .plan-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(212, 175, 55, 0.25);
+  }
+
+  .plan-card.featured {
+    border: 2px solid rgba(212, 175, 55, 0.55);
+    background:
+      linear-gradient(180deg, rgba(212,175,55,0.08) 0%, #141414 100%);
+    box-shadow:
+      0 20px 50px rgba(0,0,0,0.35),
+      0 0 0 1px rgba(212,175,55,0.12);
+    transform: scale(1.02);
+  }
+
+  .plan-label {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    background: #2a2a2a;
+    color: #f5f5f5;
+  }
+
+  .plan-card.featured .plan-label {
+    background: var(--accent);
+    color: #0f0f0f;
+  }
+
+  .plan-name {
+    margin: 18px 0 10px;
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .plan-copy {
+    color: #d7d7d7;
+    margin: 0;
+    line-height: 1.6;
+    font-size: 1rem;
+  }
+
+  .plan-list {
+    margin: 22px 0;
+    padding-left: 20px;
+    display: grid;
+    gap: 10px;
+    color: #f2f2f2;
+    line-height: 1.5;
+  }
+
+  .plan-list li {
+    padding-left: 2px;
+  }
+
+  .plan-final {
+    margin: 0;
+    color: #bdbdbd;
+    line-height: 1.6;
+    font-size: 0.96rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding-top: 18px;
+  }
+
+  .plan-button {
+    margin-top: 22px;
+    display: block;
+    text-decoration: none;
+    text-align: center;
+    background: #2b2b2b;
+    color: #ffffff;
+    border-radius: 14px;
+    padding: 15px 18px;
+    font-weight: 800;
+    font-size: 0.98rem;
+    transition: 0.2s ease;
+  }
+
+  .plan-button:hover {
+    opacity: 0.95;
+    transform: translateY(-2px);
+  }
+
+  .plan-card.featured .plan-button {
+    background: var(--accent);
+    color: #0f0f0f;
+    box-shadow: 0 10px 30px rgba(212,175,55,0.18);
+  }
+
+  .final-message {
+    text-align: center;
+    margin-top: 36px;
+    color: #f4f4f4;
+    font-weight: 700;
+    font-size: 1.05rem;
+    line-height: 1.6;
+  }
+
+  @media (min-width: 860px) {
+    .plans-grid {
+      grid-template-columns: repeat(3, 1fr);
+      align-items: start;
+    }
+  }
+</style>
   </head>
   <body>
     <main class="app-shell">
