@@ -103,8 +103,21 @@ function renderResult(data) {
   const label = strategic.cta?.label || "Conhecer o plano recomendado";
 
   resultCard.classList.remove("hidden");
-  resultCard.innerHTML = `
-    <h2>Seu diagnóstico está pronto</h2>
+  rresultCard.innerHTML = `
+  <h2>Seu diagnóstico está pronto</h2>
+
+  <div class="score-box">
+    <span class="badge">${formatClassification(data.classification)}</span>
+    <span class="score">${data.lmScore}</span>
+    <p>${data.strategic.headline}</p>
+  </div>
+
+  <p>${data.strategic.copy}</p>
+
+  <a href="./planos.html">
+    ${data.strategic.cta.label}
+  </a>
+`;
 
     <div class="score-box">
       <span class="badge">${formatClassification(data.classification)}</span>
