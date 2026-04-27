@@ -1,0 +1,207 @@
+:root {
+  --bg: #080808;
+  --card: #121212;
+  --card-2: #181818;
+  --text: #f5f1e8;
+  --muted: #b9b0a0;
+  --gold: #d8b35f;
+  --gold-2: #f0d58a;
+  --danger: #ff6b6b;
+  --border: rgba(216, 179, 95, 0.22);
+  --shadow: rgba(0, 0, 0, 0.42);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(circle at top, rgba(216, 179, 95, 0.12), transparent 30%),
+    var(--bg);
+  color: var(--text);
+}
+
+.app-shell {
+  width: min(980px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 36px 0 56px;
+}
+
+.hero {
+  margin-bottom: 24px;
+}
+
+.eyebrow {
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+h1 {
+  margin: 8px 0 12px;
+  font-size: clamp(2rem, 4vw, 4rem);
+  line-height: 1.03;
+}
+
+.subtitle {
+  max-width: 720px;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.card {
+  background: linear-gradient(180deg, var(--card), var(--card-2));
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: 0 24px 80px var(--shadow);
+  padding: clamp(18px, 3vw, 30px);
+  margin-bottom: 20px;
+}
+
+.step {
+  margin: 18px 0 14px;
+  border-left: 3px solid var(--gold);
+  padding-left: 12px;
+}
+
+.step:first-child {
+  margin-top: 0;
+}
+
+.step span {
+  color: var(--gold-2);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.step h2 {
+  margin: 4px 0 0;
+  font-size: 1.15rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+label {
+  display: grid;
+  gap: 8px;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+input,
+select {
+  width: 100%;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  padding: 13px 14px;
+  background: #0b0b0b;
+  color: var(--text);
+  font-size: 1rem;
+  outline: none;
+}
+
+input:focus,
+select:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(216, 179, 95, 0.12);
+}
+
+button {
+  width: 100%;
+  border: 0;
+  border-radius: 16px;
+  padding: 15px 18px;
+  margin-top: 20px;
+  color: #15110a;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--gold), var(--gold-2));
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error {
+  min-height: 20px;
+  color: var(--danger);
+  margin: 14px 0 0;
+}
+
+.hidden {
+  display: none;
+}
+
+.result h2 {
+  margin-top: 0;
+  font-size: 1.6rem;
+}
+
+.score-box {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: rgba(216, 179, 95, 0.08);
+}
+
+.score {
+  font-size: 3rem;
+  font-weight: 900;
+  color: var(--gold-2);
+}
+
+.badge {
+  display: inline-flex;
+  width: fit-content;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--gold-2);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.result p {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.result a {
+  display: inline-flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 18px;
+  text-decoration: none;
+  border-radius: 16px;
+  padding: 15px 18px;
+  color: #15110a;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--gold), var(--gold-2));
+}
+
+@media (max-width: 720px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .app-shell {
+    width: min(100% - 22px, 980px);
+    padding-top: 22px;
+  }
+}

@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="lm-api-base" content="https://lm-system-api.lucasmoreno115.workers.dev">
+    <title>LM System | Diagnóstico Inteligente</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+
+  <body>
+    <main class="app-shell">
+      <header class="hero">
+        <p class="eyebrow">LM System</p>
+        <h1>Seu ponto de partida para resultados de verdade.</h1>
+        <p class="subtitle">
+          Responda em poucos minutos e receba uma direção inicial baseada na sua rotina, treino, alimentação e recuperação.
+        </p>
+      </header>
+
+      <section class="card">
+        <form id="lead-form" novalidate>
+          <div class="step">
+            <span>Etapa 1/3</span>
+            <h2>Dados iniciais</h2>
+          </div>
+
+          <div class="grid">
+            <label>
+              Nome
+              <input type="text" name="name" autocomplete="name" required />
+            </label>
+
+            <label>
+              E-mail
+              <input type="email" name="email" autocomplete="email" required />
+            </label>
+
+            <label>
+              WhatsApp
+              <input type="text" name="whatsapp" autocomplete="tel" required />
+            </label>
+
+            <label>
+              Principal objetivo
+              <select name="goal" required>
+                <option value="">Selecione</option>
+                <option value="emagrecimento">Emagrecimento</option>
+                <option value="definicao_muscular">Definição muscular</option>
+                <option value="ganho_massa_muscular">Ganho de massa muscular</option>
+                <option value="saude_condicionamento">Melhorar saúde e condicionamento</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="step">
+            <span>Etapa 2/3</span>
+            <h2>Treino e rotina</h2>
+          </div>
+
+          <div class="grid">
+            <label>
+              Com que frequência você treina hoje?
+              <select name="trainingFrequency" required>
+                <option value="">Selecione</option>
+                <option value="1">Não treino atualmente</option>
+                <option value="2">1–2x por semana</option>
+                <option value="3">3x por semana</option>
+                <option value="4">4–5x por semana</option>
+                <option value="5">6x ou mais por semana</option>
+              </select>
+            </label>
+
+            <label>
+              Qual é seu nível de experiência com treino?
+              <select name="trainingExperience" required>
+                <option value="">Selecione</option>
+                <option value="1">Nunca treinei ou estou começando</option>
+                <option value="2">Já treinei, mas sem constância</option>
+                <option value="3">Treino há algum tempo, ainda aprendendo</option>
+                <option value="4">Treino com regularidade e boa técnica</option>
+                <option value="5">Treino avançado, com boa consciência corporal</option>
+              </select>
+            </label>
+
+            <label>
+              Como está sua consistência nos últimos meses?
+              <select name="consistencyHistory" required>
+                <option value="">Selecione</option>
+                <option value="1">Não consigo manter rotina</option>
+                <option value="2">Começo, mas paro rápido</option>
+                <option value="3">Oscilo bastante</option>
+                <option value="4">Consigo manter na maior parte do tempo</option>
+                <option value="5">Sou consistente há meses</option>
+              </select>
+            </label>
+
+            <label>
+              Você sente dores ou limitações físicas?
+              <select name="painInjury" required>
+                <option value="">Selecione</option>
+                <option value="1">Sem dor ou limitações</option>
+                <option value="2">Raramente sinto dor</option>
+                <option value="3">Pequenas dores, mas consigo treinar</option>
+                <option value="4">Dor ocasional que limita exercícios</option>
+                <option value="5">Dor frequente que atrapalha treinar</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="step">
+            <span>Etapa 3/3</span>
+            <h2>Alimentação e recuperação</h2>
+          </div>
+
+          <div class="grid">
+            <label>
+              Como está sua alimentação no dia a dia?
+              <select name="foodAdherence" required>
+                <option value="">Selecione</option>
+                <option value="1">Sem rotina, como no automático</option>
+                <option value="2">Tento melhorar, mas não consigo manter</option>
+                <option value="3">Consigo seguir em alguns dias</option>
+                <option value="4">Sigo bem na maior parte do tempo</option>
+                <option value="5">Tenho rotina alimentar bem estruturada</option>
+              </select>
+            </label>
+
+            <label>
+              Como está seu sono atualmente?
+              <select name="sleepQuality" required>
+                <option value="">Selecione</option>
+                <option value="1">Durmo mal e acordo cansado</option>
+                <option value="2">Sono irregular, acordo sem energia</option>
+                <option value="3">Sono razoável, varia bastante</option>
+                <option value="4">Durmo bem na maioria dos dias</option>
+                <option value="5">Sono de qualidade e recuperação boa</option>
+              </select>
+            </label>
+
+            <label>
+              Como está seu nível de estresse hoje?
+              <select name="stressLevel" required>
+                <option value="">Selecione</option>
+                <option value="1">Muito alto, difícil de controlar</option>
+                <option value="2">Alto na maior parte do tempo</option>
+                <option value="3">Moderado</option>
+                <option value="4">Baixo na maioria dos dias</option>
+                <option value="5">Muito baixo, rotina tranquila</option>
+              </select>
+            </label>
+
+            <label>
+              Como está sua motivação para mudar hoje?
+              <select name="motivationLevel" required>
+                <option value="">Selecione</option>
+                <option value="1">Muito baixa</option>
+                <option value="2">Baixa</option>
+                <option value="3">Média</option>
+                <option value="4">Alta</option>
+                <option value="5">Muito alta</option>
+              </select>
+            </label>
+          </div>
+
+          <p id="form-error" class="error" role="alert" aria-live="polite"></p>
+
+          <button id="submit-btn" type="submit">
+            Gerar diagnóstico
+          </button>
+        </form>
+      </section>
+
+      <section id="result-card" class="card result hidden" aria-live="polite"></section>
+    </main>
+
+    <script type="module" src="./script.js"></script>
+  </body>
+</html>
