@@ -3,15 +3,13 @@ const resultCard = document.getElementById("result-card");
 const formError = document.getElementById("form-error");
 const submitBtn = document.getElementById("submit-btn");
 
+// URL da API (vem do index.html)
 const apiBase =
   document.querySelector('meta[name="lm-api-base"]')?.content?.replace(/\/$/, "") || "";
 
-const PLAN_LINKS = {
-  PLANO_ESTRUTURADO: "./plano-estruturado.html",
-  CONSULTORIA_ONLINE: "./consultoria-premium.html",
-  CONSULTORIA_PREMIUM: "./consultoria-premium.html",
-  CONSULTORIA_PRESENCIAL: "./consultoria-presencial.html"
-};
+// =========================
+// SUBMIT
+// =========================
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -46,13 +44,19 @@ form.addEventListener("submit", async (event) => {
     }
 
     renderResult(json.data);
+
   } catch (error) {
     console.error("Erro ao gerar diagnóstico:", error);
-    showError("Não foi possível gerar seu diagnóstico agora. Verifique os dados e tente novamente.");
+    showError("Não foi possível gerar seu diagnóstico agora. Tente novamente.");
   } finally {
     setLoading(false);
   }
 });
+
+
+// =========================
+// BUILD PAYLOAD
+// =========================
 
 function buildPayload(formData) {
   const data = Object.fromEntries(formData);
@@ -81,43 +85,38 @@ function buildPayload(formData) {
   };
 }
 
+
+// =========================
+// VALIDATION
+// =========================
+
 function validatePayload(payload) {
   if (!payload.lead.name) return "Informe seu nome.";
   if (!payload.lead.email) return "Informe seu e-mail.";
   if (!payload.lead.whatsapp) return "Informe seu WhatsApp.";
   if (!payload.lead.goal) return "Selecione seu objetivo.";
 
-  for (const [key, value] of Object.entries(payload.answers)) {
+  for (const value of Object.values(payload.answers)) {
     if (!Number.isFinite(value) || value < 1 || value > 5) {
-      return "Responda todas as perguntas antes de gerar o diagnóstico.";
+      return "Responda todas as perguntas.";
     }
   }
 
   return "";
 }
 
+
+// =========================
+// RENDER RESULT
+// =========================
+
 function renderResult(data) {
   const strategic = data.strategic || {};
-  const offer = strategic.offer || data.recommendedOffer || "PLANO_ESTRUTURADO";
-  const href = strategic.cta?.href || PLAN_LINKS[offer] || "./planos.html";
-  const label = strategic.cta?.label || "Conhecer o plano recomendado";
 
   resultCard.classList.remove("hidden");
-  rresultCard.innerHTML = `
-  <h2>Seu diagnóstico está pronto</h2>
 
-  <div class="score-box">
-    <span class="badge">${formatClassification(data.classification)}</span>
-    <span class="score">${data.lmScore}</span>
-    <p>${data.strategic.headline}</p>
-  </div>
-
-  <p>${data.strategic.copy}</p>
-
-  <a href="./planos.html">
-    ${data.strategic.cta.label}
-  </a>
-`;
+  resultCard.innerHTML = `
+    <h2>Seu diagnóstico está pronto</h2>
 
     <div class="score-box">
       <span class="badge">${formatClassification(data.classification)}</span>
@@ -125,13 +124,20 @@ function renderResult(data) {
       <p>${strategic.headline || "Este é o seu ponto de partida dentro do Método LM."}</p>
     </div>
 
-    <p>${strategic.copy || "Com base nas suas respostas, o próximo passo é estruturar treino, alimentação e rotina com direção clara."}</p>
+    <p>${strategic.copy || "Agora o próximo passo é colocar isso em prática com estratégia."}</p>
 
-    <a href="${href}">${label}</a>
+    <a href="./planos.html">
+      ${strategic.cta?.label || "Ver planos"}
+    </a>
   `;
 
   resultCard.scrollIntoView({ behavior: "smooth", block: "start" });
 }
+
+
+// =========================
+// FORMAT CLASSIFICATION
+// =========================
 
 function formatClassification(classification) {
   const labels = {
@@ -142,8 +148,13 @@ function formatClassification(classification) {
     NIVEL_AVANCADO: "Nível avançado"
   };
 
-  return labels[classification] || classification || "Diagnóstico LM";
+  return labels[classification] || "Diagnóstico LM";
 }
+
+
+// =========================
+// UI HELPERS
+// =========================
 
 function showError(message) {
   formError.textContent = message;
