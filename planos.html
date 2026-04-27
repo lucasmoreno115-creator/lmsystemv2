@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Planos | Método LM</title>
+  <title>Escolha seu plano | Método LM</title>
 
   <style>
     body {
@@ -14,9 +14,9 @@
     }
 
     .container {
-      max-width: 1000px;
+      max-width: 900px;
       margin: auto;
-      padding: 40px 20px;
+      padding: 30px 20px;
     }
 
     h1 {
@@ -24,10 +24,19 @@
       margin-bottom: 10px;
     }
 
-    p.subtitle {
+    .subtitle {
       text-align: center;
       color: #aaa;
-      margin-bottom: 40px;
+      margin-bottom: 30px;
+    }
+
+    .highlight-box {
+      background: #121212;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 30px;
+      text-align: center;
     }
 
     .plans {
@@ -38,23 +47,27 @@
     .plan {
       background: #121212;
       border: 1px solid #222;
-      border-radius: 16px;
-      padding: 24px;
+      border-radius: 14px;
+      padding: 20px;
     }
 
-    .plan h2 {
+    .highlight {
+      border: 2px solid #d4af37;
+    }
+
+    h2 {
       margin-top: 0;
       color: #d4af37;
     }
 
-    .plan ul {
+    ul {
       padding-left: 18px;
       line-height: 1.6;
     }
 
     .price {
-      font-size: 24px;
-      margin: 20px 0;
+      font-size: 22px;
+      margin: 15px 0;
       font-weight: bold;
     }
 
@@ -67,10 +80,12 @@
       border-radius: 10px;
       text-decoration: none;
       font-weight: bold;
+      margin-top: 10px;
     }
 
-    .highlight {
-      border: 2px solid #d4af37;
+    .btn.secondary {
+      background: #222;
+      color: #fff;
     }
   </style>
 </head>
@@ -79,28 +94,33 @@
 
 <div class="container">
 
-  <h1>Escolha o melhor caminho para o seu resultado</h1>
+  <h1>Agora é escolher o seu próximo passo</h1>
   <p class="subtitle">
-    Sem promessas milagrosas. Aqui você tem direção, estratégia e execução.
+    O seu diagnóstico mostrou exatamente onde você precisa agir.  
+    Agora você decide como quer avançar.
   </p>
+
+  <div class="highlight-box">
+    👉 Sem promessas falsas. Aqui você tem estratégia, execução e resultado.
+  </div>
 
   <div class="plans">
 
     <!-- PLANO 1 -->
     <div class="plan">
       <h2>Plano Estruturado</h2>
-      <p>Para quem precisa sair da estagnação e ter direção.</p>
+      <p>Ideal para começar com direção clara.</p>
 
       <ul>
         <li>Treino personalizado</li>
         <li>Plano alimentar estruturado</li>
-        <li>Estratégia inicial clara</li>
+        <li>Estratégia inicial</li>
         <li>1 atendimento para dúvidas</li>
       </ul>
 
       <div class="price">R$ 47,90</div>
 
-      <a class="btn" href="#">
+      <a class="btn" href="https://wa.me/55SEUNUMERO?text=Quero%20começar%20com%20o%20Plano%20Estruturado">
         Começar agora
       </a>
     </div>
@@ -108,18 +128,18 @@
     <!-- PLANO 2 -->
     <div class="plan highlight">
       <h2>Consultoria Premium</h2>
-      <p>Para quem quer acompanhamento e evolução constante.</p>
+      <p>Para quem quer resultado com acompanhamento real.</p>
 
       <ul>
-        <li>Tudo do plano estruturado</li>
+        <li>Treino + dieta ajustados constantemente</li>
         <li>Acompanhamento semanal</li>
-        <li>Ajustes contínuos</li>
+        <li>Correção de estratégia</li>
         <li>Suporte direto</li>
       </ul>
 
-      <div class="price">R$ ???</div>
+      <div class="price">Mais procurado</div>
 
-      <a class="btn" href="#">
+      <a class="btn" href="https://wa.me/55SEUNUMERO?text=Quero%20a%20Consultoria%20Premium">
         Quero acompanhamento
       </a>
     </div>
@@ -127,17 +147,17 @@
     <!-- PLANO 3 -->
     <div class="plan">
       <h2>Atendimento Presencial</h2>
-      <p>Para quem quer correção e resultado mais rápido.</p>
+      <p>Para quem quer acelerar ao máximo.</p>
 
       <ul>
-        <li>Avaliação física e postural</li>
+        <li>Avaliação física completa</li>
         <li>Treino guiado</li>
         <li>Correções ao vivo</li>
       </ul>
 
       <div class="price">A partir de R$ 250</div>
 
-      <a class="btn" href="#">
+      <a class="btn secondary" href="https://wa.me/55SEUNUMERO?text=Quero%20agendar%20avaliacao">
         Agendar avaliação
       </a>
     </div>
