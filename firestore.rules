@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /lm_leads/{leadId} {
+      allow read: if false;
+      allow create: if isValidLeadCreate();
+      allow update, delete: if false;
+
+      function isValidPriority(priority) {
+        return priority == null
+          || (priority is map
+            && priority.keys().hasOnly(['score', 'level', 'closeProbability', 'contactAction', 'reasons', 'breakdown'])
+            && (!('score' in priority) || priority.score == null || priority.score is number)
+            && (!('level' in priority) || priority.level == null || priority.level is string)
+            && (!('closeProbability' in priority) || priority.closeProbability == null || priority.closeProbability is string)
+            && (!('contactAction' in priority) || priority.contactAction == null || priority.contactAction is string)
+            && (!('reasons' in priority) || priority.reasons is list)
+            && (!('breakdown' in priority) || priority.breakdown == null || priority.breakdown is map));
+      }
+
+      function hasValidDimensions(dimensions) {
+        return dimensions is map
+          && dimensions.keys().hasOnly(['adherence', 'nutrition', 'training', 'recovery', 'clinical', 'behavior'])
+          && dimensions.adherence is number && dimensions.adherence >= 0 && dimensions.adherence <= 100
+          && dimensions.nutrition is number && dimensions.nutrition >= 0 && dimensions.nutrition <= 100
+          && dimensions.training is number && dimensions.training >= 0 && dimensions.training <= 100
+          && dimensions.recovery is number && dimensions.recovery >= 0 && dimensions.recovery <= 100
+          && dimensions.clinical is number && dimensions.clinical >= 0 && dimensions.clinical <= 100
+          && dimensions.behavior is number && dimensions.behavior >= 0 && dimensions.behavior <= 100;
+      }
+
+      function isValidLeadCreate() {
+        return request.resource.data.keys().hasOnly([
+            'name', 'email', 'whatsapp', 'goal', 'lmScore', 'classification', 'tags',
+            'leadValue', 'recommendedOffer', 'dimensions', 'coachSummary', 'priority', 'status', 'createdAt'
+          ])
+          && request.resource.data.name is string
+          && request.resource.data.email is string
+          && request.resource.data.whatsapp is string
+          && request.resource.data.goal in ['fat_loss', 'muscle_gain', 'health']
+          && request.resource.data.lmScore is int
+          && request.resource.data.lmScore >= 0
+          && request.resource.data.lmScore <= 100
+          && request.resource.data.classification is string
+          && request.resource.data.tags is list
+          && request.resource.data.tags.size() <= 5
+          && request.resource.data.leadValue in ['high', 'medium', 'low']
+          && request.resource.data.recommendedOffer in ['produto_digital', 'consultoria_online', 'presencial']
+          && hasValidDimensions(request.resource.data.dimensions)
+          && request.resource.data.coachSummary is string
+          && (!('priority' in request.resource.data) || isValidPriority(request.resource.data.priority))
+          && request.resource.data.status == 'NEW'
+          && request.resource.data.createdAt == request.time;
+      }
+    }
+  }
+}
