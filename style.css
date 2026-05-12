@@ -220,7 +220,7 @@ button:disabled {
 
 .result-hero {
   display: grid;
-  grid-template-columns: 1fr 180px;
+  grid-template-columns: 1fr 150px;
   gap: 22px;
   align-items: stretch;
   margin-bottom: 22px;
@@ -245,7 +245,7 @@ button:disabled {
   place-items: center;
   align-content: center;
   gap: 8px;
-  min-height: 180px;
+  min-height: 150px;
   border: 1px solid var(--border);
   border-radius: 22px;
   background: radial-gradient(circle at top, rgba(216, 179, 95, 0.18), rgba(216, 179, 95, 0.06));
@@ -253,7 +253,7 @@ button:disabled {
 
 .score-panel strong {
   color: var(--gold-2);
-  font-size: 4rem;
+  font-size: 3.2rem;
   line-height: 1;
   font-weight: 950;
 }
@@ -274,7 +274,8 @@ button:disabled {
 }
 
 .insight-card,
-.recommendation-box {
+.recommendation-box,
+.urgency-box {
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 20px;
   background: rgba(255,255,255,0.035);
@@ -325,6 +326,28 @@ button:disabled {
   content: "✓";
   color: var(--gold-2);
   margin-right: 8px;
+}
+
+.decision-copy {
+  margin-top: 12px !important;
+  color: var(--text) !important;
+}
+
+.urgency-box {
+  margin-top: 16px;
+  border-color: var(--border);
+  background: rgba(216, 179, 95, 0.07);
+}
+
+.urgency-box strong {
+  display: block;
+  color: var(--gold-2);
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.urgency-box p {
+  margin: 0;
 }
 
 .result-actions {
