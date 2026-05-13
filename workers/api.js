@@ -5,8 +5,8 @@ export default {
     const corsHeaders = {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, x-admin-token",
     };
 
     if (request.method === "OPTIONS") {
@@ -21,6 +21,112 @@ export default {
           version: "LM_SYSTEM_ZERO_V1",
           timestamp: new Date().toISOString()
         }, 200, corsHeaders);
+      }
+
+      if (url.pathname.startsWith("/api/admin/")) {
+        if (request.headers.get("x-admin-token") !== env.ADMIN_TOKEN || !env.ADMIN_TOKEN) {
+          return jsonResponse({
+            ok: false,
+            error: { code: "UNAUTHORIZED", message: "Unauthorized" }
+          }, 401, corsHeaders);
+        }
+
+        if (request.method === "GET" && url.pathname === "/api/admin/leads") {
+          if (!env.DB) {
+            return jsonResponse({
+              ok: false,
+              error: { code: "DB_NOT_CONFIGURED", message: "Binding D1 env.DB não configurado." }
+            }, 500, corsHeaders);
+          }
+
+          await ensureSchema(env.DB);
+          const rows = await env.DB.prepare(`
+            SELECT
+              l.id AS lead_id,
+              l.name,
+              l.email,
+              l.whatsapp,
+              l.goal,
+              l.created_at AS lead_created_at,
+              l.status AS lead_status,
+              dr.lm_score,
+              dr.classification,
+              dr.recommended_offer,
+              dr.lead_priority,
+              dr.strategic_result_json,
+              dr.meta_json,
+              dr.created_at AS diagnostic_created_at
+            FROM leads l
+            LEFT JOIN diagnostic_results dr
+              ON dr.lead_id = l.id
+              AND dr.created_at = (
+                SELECT MAX(created_at)
+                FROM diagnostic_results
+                WHERE lead_id = l.id
+              )
+            ORDER BY l.created_at DESC
+          `).all();
+
+          const leads = (rows?.results || []).map((row) => {
+            const strategic = parseJsonObject(row.strategic_result_json);
+            const meta = parseJsonObject(row.meta_json);
+            return {
+              leadId: row.lead_id,
+              nome: row.name || "",
+              email: row.email || "",
+              whatsapp: row.whatsapp || "",
+              objetivo: row.goal || "",
+              lmScore: row.lm_score ?? null,
+              classification: row.classification || "",
+              recommendedOffer: row.recommended_offer || strategic.offer || null,
+              recommendedPlan: row.recommended_offer || strategic.offer || null,
+              leadPriority: row.lead_priority || strategic.priority || null,
+              mainBottleneck: strategic.tension || meta.mainBottleneck || meta.principalGargalo || null,
+              createdAt: row.diagnostic_created_at || row.lead_created_at || null,
+              status: row.lead_status || "NEW"
+            };
+          });
+
+          return jsonResponse({ ok: true, data: leads }, 200, corsHeaders);
+        }
+
+        if (request.method === "PATCH" && /^\/api\/admin\/leads\/[^/]+\/status$/.test(url.pathname)) {
+          if (!env.DB) {
+            return jsonResponse({
+              ok: false,
+              error: { code: "DB_NOT_CONFIGURED", message: "Binding D1 env.DB não configurado." }
+            }, 500, corsHeaders);
+          }
+
+          await ensureSchema(env.DB);
+          const leadId = url.pathname.split("/")[4];
+          const payload = await safeJson(request);
+          const allowed = new Set(["NEW", "CONTACTED", "NEGOTIATION", "CLOSED", "LOST"]);
+          const status = cleanString(payload?.status).toUpperCase();
+          if (!allowed.has(status)) {
+            throw appError("VALIDATION_ERROR", "Status comercial inválido.", 400);
+          }
+
+          const updated = await env.DB.prepare(`
+            UPDATE leads
+            SET status = ?
+            WHERE id = ?
+          `).bind(status, leadId).run();
+
+          if (!updated?.meta?.changes) {
+            return jsonResponse({
+              ok: false,
+              error: { code: "NOT_FOUND", message: "Lead não encontrado." }
+            }, 404, corsHeaders);
+          }
+
+          return jsonResponse({ ok: true, data: { leadId, status } }, 200, corsHeaders);
+        }
+
+        return jsonResponse({
+          ok: false,
+          error: { code: "NOT_FOUND", message: "Rota não encontrada." }
+        }, 404, corsHeaders);
       }
 
       if (request.method !== "POST" || url.pathname !== "/api/diagnostic/evaluate") {
@@ -402,9 +508,11 @@ async function ensureSchema(db) {
       email TEXT NOT NULL,
       whatsapp TEXT NOT NULL,
       goal TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'NEW',
       created_at TEXT NOT NULL
     )
   `).run();
+  await ensureColumn(db, "leads", "status", "TEXT NOT NULL DEFAULT 'NEW'");
 
   await db.prepare(`
     CREATE TABLE IF NOT EXISTS diagnostic_results (
@@ -442,6 +550,16 @@ async function ensureSchema(db) {
   await db.prepare(`CREATE INDEX IF NOT EXISTS idx_diag_score ON diagnostic_results (lm_score DESC)`).run();
   await db.prepare(`CREATE INDEX IF NOT EXISTS idx_diag_classification ON diagnostic_results (classification)`).run();
   await db.prepare(`CREATE INDEX IF NOT EXISTS idx_diag_lead ON diagnostic_results (lead_id)`).run();
+}
+
+function parseJsonObject(value) {
+  if (!value || typeof value !== "string") return {};
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
 }
 
 async function ensureColumn(db, tableName, columnName, columnType) {
