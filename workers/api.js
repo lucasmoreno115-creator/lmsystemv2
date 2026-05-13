@@ -52,6 +52,9 @@ export default {
               l.email,
               l.whatsapp,
               l.goal,
+              l.notes,
+              l.next_action,
+              l.follow_up_at,
               l.created_at AS lead_created_at,
               l.status AS lead_status,
               dr.lm_score,
@@ -88,7 +91,10 @@ export default {
               leadPriority: row.lead_priority || strategic.priority || null,
               mainBottleneck: strategic.tension || meta.mainBottleneck || meta.principalGargalo || null,
               createdAt: row.diagnostic_created_at || row.lead_created_at || null,
-              status: row.lead_status || "NEW"
+              status: row.lead_status || "NEW",
+              notes: row.notes || "",
+              nextAction: row.next_action || "",
+              followUpAt: row.follow_up_at || ""
             };
           });
 
@@ -161,6 +167,39 @@ export default {
           }
 
           return jsonResponse({ ok: true, data: { leadId, status } }, 200, corsHeaders);
+        }
+
+        if (request.method === "PATCH" && /^\/api\/admin\/leads\/[^/]+\/commercial$/.test(url.pathname)) {
+          if (!env.DB) {
+            return jsonResponse({
+              ok: false,
+              error: { code: "DB_NOT_CONFIGURED", message: "Binding D1 env.DB não configurado." }
+            }, 500, corsHeaders);
+          }
+          await ensureSchema(env.DB);
+          const leadId = url.pathname.split("/")[4];
+          const payload = await safeJson(request);
+          const notes = sanitizeOptionalField(payload?.notes, 1000, "notes");
+          const nextAction = sanitizeOptionalField(payload?.nextAction, 200, "nextAction");
+          const followUpAt = sanitizeOptionalField(payload?.followUpAt, 100, "followUpAt");
+
+          const updated = await env.DB.prepare(`
+            UPDATE leads
+            SET notes = ?, next_action = ?, follow_up_at = ?
+            WHERE id = ?
+          `).bind(notes, nextAction, followUpAt, leadId).run();
+
+          if (!updated?.meta?.changes) {
+            return jsonResponse({
+              ok: false,
+              error: { code: "NOT_FOUND", message: "Lead não encontrado." }
+            }, 404, corsHeaders);
+          }
+
+          return jsonResponse({
+            ok: true,
+            data: { leadId, notes: notes || "", nextAction: nextAction || "", followUpAt: followUpAt || "" }
+          }, 200, corsHeaders);
         }
 
         return jsonResponse({
@@ -339,6 +378,15 @@ function validateAndNormalize(body) {
 
 function cleanString(value) {
   return String(value ?? "").trim();
+}
+
+function sanitizeOptionalField(value, maxLength, fieldName) {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "string") throw appError("VALIDATION_ERROR", `Campo inválido: ${fieldName}.`, 400);
+  const cleaned = cleanString(value);
+  if (!cleaned) return null;
+  if (cleaned.length > maxLength) throw appError("VALIDATION_ERROR", `Campo ${fieldName} excede ${maxLength} caracteres.`, 400);
+  return cleaned;
 }
 
 function toScore(value) {
@@ -553,6 +601,9 @@ async function ensureSchema(db) {
     )
   `).run();
   await ensureColumn(db, "leads", "status", "TEXT NOT NULL DEFAULT 'NEW'");
+  await ensureColumn(db, "leads", "notes", "TEXT");
+  await ensureColumn(db, "leads", "next_action", "TEXT");
+  await ensureColumn(db, "leads", "follow_up_at", "TEXT");
 
   await db.prepare(`
     CREATE TABLE IF NOT EXISTS diagnostic_results (
