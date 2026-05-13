@@ -136,6 +136,34 @@ export default {
           return jsonResponse({ ok: true, data: metrics }, 200, corsHeaders);
         }
 
+        if (request.method === "GET" && url.pathname === "/api/admin/alerts") {
+          if (!env.DB) {
+            return jsonResponse({
+              ok: false,
+              error: { code: "DB_NOT_CONFIGURED", message: "Binding D1 env.DB não configurado." }
+            }, 500, corsHeaders);
+          }
+          await ensureSchema(env.DB);
+          const alertData = await generateCommercialAlerts(env.DB);
+          return jsonResponse({ ok: true, data: alertData }, 200, corsHeaders);
+        }
+
+        if (request.method === "POST" && url.pathname === "/api/admin/alerts/send") {
+          if (!env.DB) {
+            return jsonResponse({
+              ok: false,
+              error: { code: "DB_NOT_CONFIGURED", message: "Binding D1 env.DB não configurado." }
+            }, 500, corsHeaders);
+          }
+          await ensureSchema(env.DB);
+          const alertData = await generateCommercialAlerts(env.DB);
+          const sendResult = await sendWhatsAppMessage(env, alertData.message);
+          if (!sendResult.ok) {
+            return jsonResponse({ ok: false, error: sendResult.error }, sendResult.status || 400, corsHeaders);
+          }
+          return jsonResponse({ ok: true, data: { sent: true, provider: sendResult.provider, generatedAt: alertData.generatedAt } }, 200, corsHeaders);
+        }
+
         if (request.method === "PATCH" && /^\/api\/admin\/leads\/[^/]+\/status$/.test(url.pathname)) {
           if (!env.DB) {
             return jsonResponse({
@@ -324,7 +352,207 @@ export default {
       }, status, corsHeaders);
     }
   }
+  ,
+  async scheduled(controller, env, ctx) {
+    ctx.waitUntil(runDailyCommercialAlerts(env));
+  }
 };
+
+async function runDailyCommercialAlerts(env) {
+  if (!env.DB) {
+    console.log("DAILY_ALERTS_SKIP", { reason: "DB_NOT_CONFIGURED" });
+    return;
+  }
+  await ensureSchema(env.DB);
+  const alertData = await generateCommercialAlerts(env.DB);
+  const total = Object.values(alertData.summary || {}).reduce((acc, n) => acc + Number(n || 0), 0);
+  if (total === 0) {
+    console.log("DAILY_ALERTS_SKIP", { reason: "NO_ALERTS", generatedAt: alertData.generatedAt });
+    return;
+  }
+  const sendResult = await sendWhatsAppMessage(env, alertData.message);
+  if (!sendResult.ok) {
+    console.log("DAILY_ALERTS_ERROR", { error: sendResult.error });
+    return;
+  }
+  console.log("DAILY_ALERTS_SENT", { provider: sendResult.provider, generatedAt: alertData.generatedAt, totalAlerts: total });
+}
+
+async function generateCommercialAlerts(db) {
+  const rows = await db.prepare(`
+    SELECT
+      l.id AS lead_id,
+      l.name,
+      l.whatsapp,
+      l.status,
+      l.notes,
+      l.next_action,
+      l.follow_up_at,
+      l.created_at,
+      dr.recommended_offer,
+      dr.lead_priority,
+      dr.strategic_result_json
+    FROM leads l
+    LEFT JOIN diagnostic_results dr
+      ON dr.lead_id = l.id
+      AND dr.created_at = (
+        SELECT MAX(created_at) FROM diagnostic_results WHERE lead_id = l.id
+      )
+    ORDER BY l.created_at DESC
+  `).all();
+
+  const now = new Date();
+  const leads = (rows?.results || []).map((row) => {
+    const strategic = parseJsonObject(row.strategic_result_json);
+    return {
+      leadId: row.lead_id,
+      nome: row.name || "",
+      whatsapp: row.whatsapp || "",
+      recommendedOffer: row.recommended_offer || strategic.offer || "",
+      leadPriority: row.lead_priority || strategic.priority || "",
+      status: cleanString(row.status).toUpperCase() || "NEW",
+      mainBottleneck: strategic.tension || null,
+      followUpAt: row.follow_up_at || "",
+      createdAt: row.created_at || "",
+      notes: row.notes || "",
+      nextAction: row.next_action || ""
+    };
+  });
+
+  const withAlerts = [];
+  for (const lead of leads) {
+    for (const alertType of resolveAlertTypes(lead, now)) {
+      withAlerts.push({ ...lead, alertType });
+    }
+  }
+
+  const summary = {
+    overdue: withAlerts.filter((l) => l.alertType === "overdue").length,
+    today: withAlerts.filter((l) => l.alertType === "today").length,
+    newStale: withAlerts.filter((l) => l.alertType === "new_stale").length,
+    hotNoAction: withAlerts.filter((l) => l.alertType === "hot_no_action").length,
+    negotiationStale: withAlerts.filter((l) => l.alertType === "negotiation_stale").length
+  };
+
+  const priorityOrder = ["overdue", "today", "hot_no_action", "negotiation_stale", "new_stale"];
+  const priorityLeads = withAlerts
+    .sort((a, b) => priorityOrder.indexOf(a.alertType) - priorityOrder.indexOf(b.alertType))
+    .slice(0, 10)
+    .map((lead) => ({
+      leadId: lead.leadId,
+      nome: lead.nome,
+      whatsapp: lead.whatsapp,
+      recommendedOffer: lead.recommendedOffer,
+      leadPriority: lead.leadPriority,
+      status: lead.status,
+      mainBottleneck: lead.mainBottleneck,
+      followUpAt: lead.followUpAt,
+      alertType: lead.alertType
+    }));
+
+  const generatedAt = new Date().toISOString();
+  const alertData = { generatedAt, summary, priorityLeads };
+  return { ...alertData, message: buildDailyAlertMessage(alertData) };
+}
+
+function resolveAlertTypes(lead, now) {
+  const types = [];
+  const followUpDate = parseDateValue(lead.followUpAt);
+  const isClosedOrLost = ["CLOSED", "LOST"].includes(lead.status);
+  const hasFutureFollowUp = followUpDate && followUpDate > now;
+  const hasNoAction = !cleanString(lead.notes) && !cleanString(lead.nextAction);
+  const createdAt = parseDateValue(lead.createdAt);
+  const staleHours = createdAt ? (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60) : 0;
+
+  if (followUpDate && followUpDate < now && !isClosedOrLost) types.push("overdue");
+  if (followUpDate && isSameUtcDate(followUpDate, now) && !isClosedOrLost) types.push("today");
+  if (lead.status === "NEW" && staleHours > 24) types.push("new_stale");
+  if (isHotLeadRule(lead) && ["NEW", "CONTACTED"].includes(lead.status) && hasNoAction) types.push("hot_no_action");
+  if (lead.status === "NEGOTIATION" && (!hasFutureFollowUp || (followUpDate && followUpDate <= now))) types.push("negotiation_stale");
+
+  return types;
+}
+
+function isHotLeadRule(lead) {
+  const offerText = cleanString(lead.recommendedOffer).toUpperCase();
+  const priorityText = cleanString(lead.leadPriority).toUpperCase();
+  return offerText.includes("PREMIUM") || offerText.includes("PRESENCIAL") || ["HIGH", "HOT", "ALTA"].some((v) => priorityText.includes(v));
+}
+
+function buildDailyAlertMessage(alertData) {
+  const summary = alertData.summary || {};
+  const priority = (alertData.priorityLeads || []).slice(0, 3);
+  const lines = priority.length
+    ? priority.map((lead, idx) => `${idx + 1}. ${lead.nome || "Lead sem nome"} — ${lead.recommendedOffer || "Sem plano"} — ${formatAlertTypeLabel(lead.alertType)}`)
+    : ["1. Sem leads prioritários no momento."];
+
+  return [
+    "Bom dia, Lucas.",
+    "",
+    "Alertas Comerciais LM de hoje:",
+    "",
+    `⚠️ ${summary.overdue || 0} retornos vencidos`,
+    `📅 ${summary.today || 0} retornos para hoje`,
+    `🔥 ${summary.hotNoAction || 0} leads HOT sem ação`,
+    `💬 ${summary.negotiationStale || 0} negociações paradas`,
+    `🆕 ${summary.newStale || 0} leads novos sem contato há mais de 24h`,
+    "",
+    "Prioridade:",
+    ...lines,
+    "",
+    "Acesse o painel:",
+    "https://app.lucasmorenopersonal.com.br/coach-dashboard.html"
+  ].join("\n");
+}
+
+function formatAlertTypeLabel(type) {
+  const map = {
+    overdue: "retorno vencido",
+    today: "retorno para hoje",
+    hot_no_action: "lead HOT sem ação",
+    negotiation_stale: "negociação parada",
+    new_stale: "lead NEW parado"
+  };
+  return map[type] || type;
+}
+
+function parseDateValue(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function isSameUtcDate(a, b) {
+  return a.getUTCFullYear() === b.getUTCFullYear() && a.getUTCMonth() === b.getUTCMonth() && a.getUTCDate() === b.getUTCDate();
+}
+
+async function sendWhatsAppMessage(env, message) {
+  const provider = cleanString(env.WHATSAPP_PROVIDER || "").toLowerCase();
+  if (!provider || !env.WHATSAPP_TOKEN || !env.WHATSAPP_PHONE_NUMBER_ID || !env.WHATSAPP_TO) {
+    return { ok: false, status: 400, error: { code: "WHATSAPP_NOT_CONFIGURED", message: "Integração WhatsApp não configurada." } };
+  }
+  if (provider !== "meta") {
+    return { ok: false, status: 400, error: { code: "PROVIDER_NOT_SUPPORTED", message: "Provedor WhatsApp não suportado no momento." } };
+  }
+  const response = await fetch(`https://graph.facebook.com/v20.0/${env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.WHATSAPP_TOKEN}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      to: env.WHATSAPP_TO,
+      type: "text",
+      text: { preview_url: false, body: message }
+    })
+  });
+  if (!response.ok) {
+    const payload = await response.text();
+    return { ok: false, status: 502, error: { code: "WHATSAPP_SEND_FAILED", message: "Falha ao enviar alerta WhatsApp.", details: payload.slice(0, 500) } };
+  }
+  return { ok: true, provider: "meta" };
+}
 
 async function safeJson(request) {
   try {
