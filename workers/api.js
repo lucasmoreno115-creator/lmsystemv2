@@ -1,3 +1,8 @@
+
+const START_PRICE = 59.90;
+const PREMIUM_PRICE = 229.90;
+const PRESENCIAL_PRICE = 440.00;
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -88,6 +93,41 @@ export default {
           });
 
           return jsonResponse({ ok: true, data: leads }, 200, corsHeaders);
+        }
+
+
+        if (request.method === "GET" && url.pathname === "/api/admin/metrics") {
+          if (!env.DB) {
+            return jsonResponse({
+              ok: false,
+              error: { code: "DB_NOT_CONFIGURED", message: "Binding D1 env.DB não configurado." }
+            }, 500, corsHeaders);
+          }
+
+          await ensureSchema(env.DB);
+          const period = normalizePeriod(url.searchParams.get("period"));
+          const rows = await env.DB.prepare(`
+            SELECT
+              l.id AS lead_id,
+              l.status AS lead_status,
+              l.created_at AS lead_created_at,
+              dr.recommended_offer,
+              dr.lead_priority,
+              dr.strategic_result_json,
+              dr.created_at AS diagnostic_created_at
+            FROM leads l
+            LEFT JOIN diagnostic_results dr
+              ON dr.lead_id = l.id
+              AND dr.created_at = (
+                SELECT MAX(created_at)
+                FROM diagnostic_results
+                WHERE lead_id = l.id
+              )
+            ORDER BY l.created_at DESC
+          `).all();
+
+          const metrics = buildMetrics(rows?.results || [], period);
+          return jsonResponse({ ok: true, data: metrics }, 200, corsHeaders);
         }
 
         if (request.method === "PATCH" && /^\/api\/admin\/leads\/[^/]+\/status$/.test(url.pathname)) {
@@ -551,6 +591,140 @@ async function ensureSchema(db) {
   await db.prepare(`CREATE INDEX IF NOT EXISTS idx_diag_classification ON diagnostic_results (classification)`).run();
   await db.prepare(`CREATE INDEX IF NOT EXISTS idx_diag_lead ON diagnostic_results (lead_id)`).run();
 }
+
+
+function normalizePeriod(period) {
+  const value = cleanString(period).toLowerCase();
+  if (["today", "week", "month", "all"].includes(value)) return value;
+  return "all";
+}
+
+function buildMetrics(rows, period) {
+  const leads = rows.map((row) => {
+    const strategic = parseJsonObject(row.strategic_result_json);
+    const status = cleanString(row.lead_status).toUpperCase() || "NEW";
+    return {
+      createdAt: row.lead_created_at,
+      status,
+      recommendedOffer: row.recommended_offer || strategic.offer || "",
+      leadPriority: row.lead_priority || strategic.priority || ""
+    };
+  });
+
+  const now = new Date();
+  const filtered = leads.filter((lead) => isInPeriod(lead.createdAt, now, period));
+  const totalLeads = filtered.length;
+
+  const overview = {
+    totalLeads,
+    leadsToday: leads.filter((lead) => isInPeriod(lead.createdAt, now, "today")).length,
+    leadsThisWeek: leads.filter((lead) => isInPeriod(lead.createdAt, now, "week")).length,
+    leadsThisMonth: leads.filter((lead) => isInPeriod(lead.createdAt, now, "month")).length,
+    closedThisMonth: leads.filter((lead) => lead.status === "CLOSED" && isInPeriod(lead.createdAt, now, "month")).length,
+    lostThisMonth: leads.filter((lead) => lead.status === "LOST" && isInPeriod(lead.createdAt, now, "month")).length,
+    contactedThisMonth: leads.filter((lead) => lead.status === "CONTACTED" && isInPeriod(lead.createdAt, now, "month")).length,
+    negotiationThisMonth: leads.filter((lead) => lead.status === "NEGOTIATION" && isInPeriod(lead.createdAt, now, "month")).length
+  };
+
+  const pipeline = ["NEW", "CONTACTED", "NEGOTIATION", "CLOSED", "LOST"].reduce((acc, status) => {
+    acc[status] = filtered.filter((lead) => lead.status === status).length;
+    return acc;
+  }, {});
+
+  const conversion = {
+    contactRate: toPercent((pipeline.CONTACTED + pipeline.NEGOTIATION + pipeline.CLOSED + pipeline.LOST) / (totalLeads || 1)),
+    negotiationRate: toPercent((pipeline.NEGOTIATION + pipeline.CLOSED) / (totalLeads || 1)),
+    closeRate: toPercent(pipeline.CLOSED / (totalLeads || 1)),
+    lossRate: toPercent(pipeline.LOST / (totalLeads || 1))
+  };
+
+  const planBuckets = { "Plano Start": 0, "Consultoria Premium": 0, "Consultoria Presencial": 0, "Outros/Sem plano": 0 };
+  const qualityBuckets = { HOT: 0, WARM: 0, COLD: 0 };
+
+  let estimatedPipelineValue = 0;
+  let closedRevenueThisMonth = 0;
+
+  for (const lead of filtered) {
+    const plan = normalizePlan(lead.recommendedOffer);
+    planBuckets[plan] += 1;
+
+    const quality = classifyLeadQuality(lead.recommendedOffer, lead.leadPriority);
+    qualityBuckets[quality] += 1;
+
+    const price = resolveOfferPrice(lead.recommendedOffer);
+    if (["NEW", "CONTACTED", "NEGOTIATION"].includes(lead.status)) estimatedPipelineValue += price;
+
+    // Limitação: como ainda não há closed_at, usamos created_at como aproximação para fechamentos do mês.
+    if (lead.status === "CLOSED" && isInPeriod(lead.createdAt, now, "month")) closedRevenueThisMonth += price;
+  }
+
+  const recommendedPlans = Object.entries(planBuckets).map(([plan, count]) => ({ plan, count, percentage: toPercent(count / (totalLeads || 1)) }));
+  const leadQuality = Object.entries(qualityBuckets).map(([bucket, count]) => ({ bucket, count, percentage: toPercent(count / (totalLeads || 1)) }));
+
+  return {
+    period,
+    overview,
+    pipeline,
+    conversion,
+    recommendedPlans,
+    leadQuality,
+    revenue: {
+      estimatedPipelineValue: round2(estimatedPipelineValue),
+      closedRevenueThisMonth: round2(closedRevenueThisMonth),
+      averageTicketClosed: round2(closedRevenueThisMonth / (overview.closedThisMonth || 1))
+    },
+    pricing: { START_PRICE, PREMIUM_PRICE, PRESENCIAL_PRICE }
+  };
+}
+
+function isInPeriod(dateValue, now, period) {
+  if (period === "all") return true;
+  const d = new Date(dateValue);
+  if (Number.isNaN(d.getTime())) return false;
+
+  if (period === "today") {
+    return d.getUTCFullYear() === now.getUTCFullYear() && d.getUTCMonth() === now.getUTCMonth() && d.getUTCDate() === now.getUTCDate();
+  }
+
+  if (period === "week") {
+    const day = now.getUTCDay();
+    const diff = day === 0 ? 6 : day - 1;
+    const weekStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - diff, 0, 0, 0));
+    return d >= weekStart && d <= now;
+  }
+
+  if (period === "month") {
+    return d.getUTCFullYear() === now.getUTCFullYear() && d.getUTCMonth() === now.getUTCMonth();
+  }
+
+  return true;
+}
+
+function normalizePlan(offer) {
+  const text = cleanString(offer).toUpperCase();
+  if (text.includes("PRESENCIAL")) return "Consultoria Presencial";
+  if (text.includes("PREMIUM") || text.includes("ONLINE")) return "Consultoria Premium";
+  if (text.includes("START") || text.includes("ESTRUTURADO")) return "Plano Start";
+  return "Outros/Sem plano";
+}
+
+function classifyLeadQuality(offer, priority) {
+  const offerText = cleanString(offer).toUpperCase();
+  const priorityText = cleanString(priority).toUpperCase();
+  if (offerText.includes("PREMIUM") || offerText.includes("PRESENCIAL") || ["HIGH", "HOT", "ALTA"].some((v) => priorityText.includes(v))) return "HOT";
+  if (offerText.includes("START") || ["MEDIUM", "MEDIA", "MÉDIA"].some((v) => priorityText.includes(v))) return "WARM";
+  return "COLD";
+}
+
+function resolveOfferPrice(offer) {
+  const text = cleanString(offer).toUpperCase();
+  if (text.includes("PRESENCIAL")) return PRESENCIAL_PRICE;
+  if (text.includes("PREMIUM") || text.includes("ONLINE")) return PREMIUM_PRICE;
+  return START_PRICE;
+}
+
+function toPercent(value) { return round1((value || 0) * 100); }
+function round2(value) { return Math.round((value || 0) * 100) / 100; }
 
 function parseJsonObject(value) {
   if (!value || typeof value !== "string") return {};
