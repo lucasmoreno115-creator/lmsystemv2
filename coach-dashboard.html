@@ -317,6 +317,12 @@
     <p id="feedback"></p>
 
     <h2>Alertas Comerciais LM</h2>
+    <section class="bar">
+      <button id="previewAlerts">Ver prévia da mensagem</button>
+      <button class="gold" id="sendAlerts">Enviar alerta para meu WhatsApp</button>
+      <span></span>
+    </section>
+    <pre id="alertsPreview" class="card" style="white-space: pre-wrap; display:none;"></pre>
     <section id="commercialAlerts" class="alerts-grid"></section>
 
     <h2>Visão comercial</h2>
@@ -377,6 +383,8 @@
     $("planFilter").onchange = render;
     $("periodFilter").onchange = loadDashboard;
     $("followUpFilter").onchange = render;
+    $("previewAlerts").onclick = previewAlertsMessage;
+    $("sendAlerts").onclick = sendAlertsToWhatsApp;
 
     async function loadDashboard() {
       const token = tokenInput.value.trim();
@@ -437,6 +445,44 @@
 
       currentMetrics = json.data;
       renderMetrics();
+    }
+
+    async function previewAlertsMessage() {
+      const token = tokenInput.value.trim();
+      if (!token) {
+        feedback.textContent = "Informe o token admin.";
+        return;
+      }
+      const res = await fetch(`${API_BASE}/api/admin/alerts`, { headers: { "x-admin-token": token } });
+      const json = await res.json();
+      if (!res.ok || !json.ok) {
+        feedback.textContent = json?.error?.message || "Erro ao gerar prévia.";
+        return;
+      }
+      $("alertsPreview").style.display = "block";
+      $("alertsPreview").textContent = json?.data?.message || "Sem mensagem disponível.";
+      feedback.textContent = "Prévia do resumo carregada.";
+    }
+
+    async function sendAlertsToWhatsApp() {
+      const token = tokenInput.value.trim();
+      if (!token) {
+        feedback.textContent = "Informe o token admin.";
+        return;
+      }
+      feedback.textContent = "Enviando alerta para seu WhatsApp...";
+      const res = await fetch(`${API_BASE}/api/admin/alerts/send`, {
+        method: "POST",
+        headers: { "x-admin-token": token }
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) {
+        feedback.textContent = json?.error?.code === "WHATSAPP_NOT_CONFIGURED"
+          ? "Erro: WhatsApp não configurado (WHATSAPP_NOT_CONFIGURED)."
+          : (json?.error?.message || "Erro ao enviar alerta.");
+        return;
+      }
+      feedback.textContent = "Alerta enviado para seu WhatsApp.";
     }
 
     function hydrateFilters(leads) {
