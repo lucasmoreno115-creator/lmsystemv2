@@ -3,42 +3,152 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LM System | Dashboard de Prescrição</title>
+    <title>LM System | Painel de Leads</title>
     <link rel="icon" type="image/png" href="./favicon.png" />
-    <link rel="stylesheet" href="./style.css" />
     <style>
-      body.admin-gated { visibility: hidden; }
-      .coach-header h1 { margin: 8px 0 4px; }
-      .coach-header p { color: var(--muted); margin: 0; }
-      #coach-dashboard-root { display: grid; gap: 16px; margin-top: 16px; }
-      .coach-grid-meta { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
-      .coach-grid-meta p { margin: 0; color: #d7d7d7; }
-      .coach-direction-grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
-      .coach-direction-grid article { border: 1px solid #2f2f2f; border-radius: 12px; padding: 12px; background: #111; }
-      .coach-direction-grid ul, .card ul { margin: 8px 0 0; padding-left: 18px; color: #dcdcdc; }
-      .coach-actions { display: grid; gap: 8px; }
-      .ghost-link { display: inline-block; color: var(--muted); text-decoration: none; border: 1px solid #2f2f2f; border-radius: 10px; padding: 10px 12px; text-align: center; }
-      #planning-base-output { white-space: pre-wrap; background: #0f0f0f; border: 1px solid #2f2f2f; border-radius: 12px; padding: 12px; color: #d8d8d8; max-height: 320px; overflow: auto; }
-      #coach-action-feedback { min-height: 20px; color: var(--accent); margin-top: 8px; }
-      .coach-empty h2 { margin-top: 0; }
-      @media (min-width: 880px) {
-        .app-shell { max-width: 980px; }
-        .coach-direction-grid { grid-template-columns: repeat(3, 1fr); }
+      :root {
+        --bg: #070707;
+        --card: #111;
+        --text: #ececec;
+        --muted: #9c9c9c;
+        --gold: #d4af37;
+        --line: #2b2b2b;
+        --ok: #2ecc71;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: Inter, Arial, sans-serif; background: var(--bg); color: var(--text); }
+      .wrap { max-width: 1200px; margin: 0 auto; padding: 20px 14px 40px; }
+      h1 { margin: 0 0 6px; color: var(--gold); }
+      .sub { margin: 0 0 14px; color: var(--muted); }
+      .bar, .filters { display: grid; gap: 10px; grid-template-columns: 1fr auto auto; }
+      .filters { grid-template-columns: repeat(2, minmax(140px, 220px)); margin: 12px 0; }
+      input, select, button {
+        background: #0d0d0d; border: 1px solid var(--line); color: var(--text); border-radius: 10px; padding: 10px;
+      }
+      button { cursor: pointer; }
+      .gold { background: var(--gold); color: #000; border: none; font-weight: 700; }
+      table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+      th, td { padding: 10px; border-bottom: 1px solid var(--line); text-align: left; font-size: 14px; vertical-align: top; }
+      th { color: var(--gold); font-weight: 700; }
+      .actions { display: grid; gap: 8px; }
+      .wa { background: #1f8f48; border: none; color: white; text-decoration: none; padding: 8px 10px; border-radius: 8px; display: inline-block; text-align: center; }
+      #feedback { min-height: 20px; color: var(--muted); margin: 8px 0; }
+      @media (max-width: 900px) {
+        .bar { grid-template-columns: 1fr; }
+        table, thead, tbody, th, td, tr { display: block; }
+        thead { display: none; }
+        tr { border: 1px solid var(--line); border-radius: 12px; margin-bottom: 10px; padding: 6px; background: var(--card); }
+        td { border: none; padding: 6px; }
+        td::before { content: attr(data-label); display: block; color: var(--gold); font-size: 12px; margin-bottom: 2px; }
       }
     </style>
   </head>
-  <body class="admin-gated">
-    <main class="app-shell">
-      <header class="coach-header">
-        <p class="eyebrow">Coach View</p>
-        <h1>Dashboard de Prescrição</h1>
-        <p>Visão estratégica do aluno e direção inicial de planejamento.</p>
-      </header>
+  <body>
+    <main class="wrap">
+      <h1>Painel Interno de Leads</h1>
+      <p class="sub">Visualização e follow-up comercial (admin).</p>
 
-      <section id="coach-dashboard-root"></section>
-      <p id="coach-action-feedback" aria-live="polite"></p>
+      <section class="bar">
+        <input id="adminToken" type="password" placeholder="ADMIN token" />
+        <button class="gold" id="saveToken">Salvar token</button>
+        <button id="loadLeads">Carregar leads</button>
+      </section>
+
+      <section class="filters">
+        <select id="statusFilter"><option value="">Todos status</option></select>
+        <select id="planFilter"><option value="">Todos planos</option></select>
+      </section>
+
+      <p id="feedback"></p>
+      <table>
+        <thead>
+          <tr><th>Nome</th><th>WhatsApp</th><th>Objetivo</th><th>LM Score</th><th>Classificação</th><th>Plano</th><th>Prioridade</th><th>Gargalo</th><th>Data</th><th>Status</th><th>Ações</th></tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
     </main>
 
-    <script type="module" src="./src/coach/coach-dashboard-entry.js"></script>
+    <script>
+      const statusList = ["NEW", "CONTACTED", "NEGOTIATION", "CLOSED", "LOST"];
+      const $ = (id) => document.getElementById(id);
+      const feedback = $("feedback");
+      let allLeads = [];
+
+      const tokenInput = $("adminToken");
+      tokenInput.value = localStorage.getItem("lm_admin_token") || "";
+
+      $("saveToken").onclick = () => {
+        localStorage.setItem("lm_admin_token", tokenInput.value.trim());
+        feedback.textContent = "Token salvo no navegador.";
+      };
+
+      $("loadLeads").onclick = fetchLeads;
+      $("statusFilter").onchange = render;
+      $("planFilter").onchange = render;
+
+      async function fetchLeads() {
+        const token = tokenInput.value.trim();
+        if (!token) return feedback.textContent = "Informe o token admin.";
+        feedback.textContent = "Carregando...";
+        const res = await fetch("/api/admin/leads", { headers: { "x-admin-token": token } });
+        const json = await res.json();
+        if (!res.ok || !json.ok) return feedback.textContent = json?.error?.message || "Erro ao carregar leads.";
+        allLeads = Array.isArray(json.data) ? json.data : [];
+        hydrateFilters(allLeads);
+        render();
+        feedback.textContent = `${allLeads.length} lead(s) carregado(s).`;
+      }
+
+      function hydrateFilters(leads) {
+        const statusFilter = $("statusFilter");
+        const planFilter = $("planFilter");
+        statusFilter.innerHTML = '<option value="">Todos status</option>' + statusList.map(s => `<option value="${s}">${s}</option>`).join("");
+        const plans = [...new Set(leads.map(l => l.recommendedOffer || l.recommendedPlan).filter(Boolean))];
+        planFilter.innerHTML = '<option value="">Todos planos</option>' + plans.map(p => `<option value="${p}">${p}</option>`).join("");
+      }
+
+      function render() {
+        const s = $("statusFilter").value;
+        const p = $("planFilter").value;
+        const rows = allLeads.filter(l => (!s || l.status === s) && (!p || (l.recommendedOffer || l.recommendedPlan) === p));
+        $("tbody").innerHTML = rows.map(leadRow).join("");
+      }
+
+      function leadRow(lead) {
+        const number = normalizePhone(lead.whatsapp || "");
+        const gargalo = lead.mainBottleneck || "não informado";
+        const msg = `Olá, ${lead.nome || ""}. Vi seu diagnóstico no Método LM e seu principal ponto hoje parece ser ${gargalo}. Posso te explicar rapidamente qual seria o melhor próximo passo para o seu caso?`;
+        const waUrl = `https://wa.me/${number}?text=${encodeURIComponent(msg)}`;
+        const statusSelect = `<select onchange="updateStatus('${lead.leadId}', this.value)">${statusList.map(s => `<option value="${s}" ${lead.status===s?"selected":""}>${s}</option>`).join("")}</select>`;
+        return `<tr>
+          <td data-label="Nome">${esc(lead.nome)}</td><td data-label="WhatsApp">${esc(lead.whatsapp||"")}</td><td data-label="Objetivo">${esc(lead.objetivo||"")}</td>
+          <td data-label="LM Score">${lead.lmScore ?? "-"}</td><td data-label="Classificação">${esc(lead.classification||"")}</td><td data-label="Plano">${esc(lead.recommendedOffer||lead.recommendedPlan||"-")}</td>
+          <td data-label="Prioridade">${esc(lead.leadPriority||"-")}</td><td data-label="Gargalo">${esc(gargalo)}</td><td data-label="Data">${fmtDate(lead.createdAt)}</td>
+          <td data-label="Status">${statusSelect}</td><td data-label="Ações" class="actions"><a class="wa" target="_blank" href="${waUrl}">Chamar no WhatsApp</a></td>
+        </tr>`;
+      }
+
+      async function updateStatus(leadId, status) {
+        const token = tokenInput.value.trim();
+        const res = await fetch(`/api/admin/leads/${leadId}/status`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", "x-admin-token": token },
+          body: JSON.stringify({ status })
+        });
+        const json = await res.json();
+        if (!res.ok || !json.ok) return feedback.textContent = json?.error?.message || "Erro ao atualizar status";
+        const lead = allLeads.find(l => l.leadId === leadId); if (lead) lead.status = status;
+        feedback.textContent = `Status atualizado para ${status}.`;
+      }
+      window.updateStatus = updateStatus;
+
+      function normalizePhone(raw) {
+        let digits = String(raw || "").replace(/\D/g, "");
+        if (!digits.startsWith("55")) digits = `55${digits}`;
+        return digits;
+      }
+      function fmtDate(v){ if(!v) return "-"; const d = new Date(v); return isNaN(d) ? v : d.toLocaleString("pt-BR"); }
+      function esc(v){ return String(v).replace(/[&<>'"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m])); }
+    </script>
   </body>
 </html>
