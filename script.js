@@ -162,9 +162,15 @@ function renderResult(data, payload) {
       <span class="recommendation-label">Plano recomendado</span>
       <h3>${offerConfig.title}</h3>
       <p>${offerConfig.reason}</p>
+      <p class="decision-copy">${offerConfig.decision}</p>
       <ul>
         ${offerConfig.bullets.map((bullet) => `<li>${bullet}</li>`).join("")}
       </ul>
+    </div>
+
+    <div class="urgency-box">
+      <strong>${offerConfig.urgencyTitle}</strong>
+      <p>${offerConfig.urgencyCopy}</p>
     </div>
 
     <div class="result-actions">
@@ -172,7 +178,7 @@ function renderResult(data, payload) {
         ${offerConfig.cta}
       </a>
       <a class="result-secondary" href="${LINKS.whatsapp}" target="_blank" rel="noopener">
-        Tirar dúvida antes de decidir
+        Quero orientação personalizada
       </a>
     </div>
 
@@ -232,8 +238,11 @@ function getOfferConfig(offer, score, classification) {
     PLANO_ESTRUTURADO: {
       title: "Plano Start",
       href: LINKS.start,
-      cta: "Começar pelo Plano Start",
-      reason: "O melhor primeiro passo para organizar treino, nutrição e direção inicial sem entrar em um processo complexo demais agora.",
+      cta: "Quero começar com direção",
+      reason: "Seu momento não pede mais intensidade. Pede estrutura.",
+      decision: "Hoje, o principal bloqueio não está na sua força de vontade. Está na falta de consistência entre treino, rotina e estratégia alimentar. Por isso, o melhor caminho agora não é começar pelo plano mais complexo. É começar pelo plano certo. O Plano Start organiza sua base, cria direção e transforma tentativa em processo.",
+      urgencyTitle: "O primeiro passo certo vale mais do que o plano mais caro.",
+      urgencyCopy: "Quanto mais tempo você continua sem uma estratégia clara, mais energia gasta recomeçando. O objetivo aqui não é tentar mais uma vez. É construir um processo sustentável.",
       bullets: [
         "Avaliação inicial",
         "Treino personalizado",
@@ -244,8 +253,11 @@ function getOfferConfig(offer, score, classification) {
     CONSULTORIA_ONLINE: {
       title: "Consultoria Premium LM",
       href: LINKS.premium,
-      cta: "Entrar para a Premium LM",
-      reason: "Seu perfil mostra que apenas receber um plano pode não ser suficiente. O diferencial será acompanhar, ajustar e manter a execução com proximidade.",
+      cta: "Quero acompanhamento real",
+      reason: "Seu perfil mostra que apenas receber um plano provavelmente não será suficiente.",
+      decision: "Você já tem ponto de partida, mas ainda precisa de acompanhamento, ajustes e proximidade para não depender de motivação. A Premium LM é indicada quando o resultado depende menos de saber o que fazer e mais de manter execução com direção.",
+      urgencyTitle: "Seu gargalo não é falta de informação. É falta de acompanhamento estratégico.",
+      urgencyCopy: "Sem ajuste de rota, o processo fica vulnerável a rotina, estresse e oscilações de adesão. Com acompanhamento, cada semana vira dado para corrigir e avançar.",
       bullets: [
         "Diagnóstico + estratégia individual",
         "Acompanhamento contínuo",
@@ -257,7 +269,10 @@ function getOfferConfig(offer, score, classification) {
       title: "Consultoria Premium LM",
       href: LINKS.premium,
       cta: "Entrar para a Premium LM",
-      reason: "Esse é o caminho mais indicado quando o objetivo exige direção, constância e acompanhamento real para não depender de motivação ou tentativa isolada.",
+      reason: "Esse é o caminho mais indicado quando o objetivo exige direção, constância e acompanhamento real.",
+      decision: "Seu perfil pede uma estratégia mais próxima, com treino, nutrição e ajustes contínuos. Aqui, o objetivo não é entregar mais uma rotina. É conduzir sua execução para que o plano funcione dentro da sua vida real.",
+      urgencyTitle: "Você não precisa de mais uma tentativa isolada.",
+      urgencyCopy: "Quando existe acompanhamento, o processo deixa de depender de perfeição e passa a depender de correção de rota. É isso que sustenta resultado.",
       bullets: [
         "Consultoria presencial inicial",
         "Treino individualizado",
@@ -269,7 +284,10 @@ function getOfferConfig(offer, score, classification) {
       title: "Consultoria Presencial LM",
       href: LINKS.presencial,
       cta: "Solicitar avaliação presencial",
-      reason: "Seu perfil se beneficia de maior proximidade, avaliação técnica e correção ao vivo para evoluir com mais segurança.",
+      reason: "Seu perfil se beneficia de maior proximidade, avaliação técnica e correção ao vivo.",
+      decision: "Quando existem limitações, insegurança técnica ou necessidade de acompanhamento mais próximo, o presencial reduz erro de execução e aumenta precisão no processo.",
+      urgencyTitle: "O presencial é indicado quando segurança e correção precisam vir antes de intensidade.",
+      urgencyCopy: "A estratégia fica mais eficiente quando o treino é observado, corrigido e ajustado em tempo real.",
       bullets: [
         "Avaliação física e postural",
         "Treino guiado",
