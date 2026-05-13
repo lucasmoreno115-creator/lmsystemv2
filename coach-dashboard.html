@@ -193,6 +193,43 @@
       border-radius: 8px;
     }
 
+    .alerts-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      margin-bottom: 8px;
+    }
+
+    .alert-card {
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .alert-card .value {
+      font-size: 34px;
+    }
+
+    .alert-title {
+      margin-top: 6px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .alert-card-critical {
+      background: #2a1111;
+      border-color: #8e2a2a;
+    }
+
+    .alert-card-warn {
+      background: #2a210f;
+      border-color: var(--gold);
+    }
+
+    .alert-card-normal {
+      background: #141414;
+      border-color: #333;
+    }
+
     #feedback {
       min-height: 20px;
       color: var(--muted);
@@ -279,6 +316,9 @@
 
     <p id="feedback"></p>
 
+    <h2>Alertas Comerciais LM</h2>
+    <section id="commercialAlerts" class="alerts-grid"></section>
+
     <h2>Visão comercial</h2>
     <section id="mainMetrics" class="grid"></section>
 
@@ -321,6 +361,8 @@
 
     let allLeads = [];
     let currentMetrics = null;
+    let activeAlertFilter = "all";
+    let commercialAlerts = {};
 
     const tokenInput = $("adminToken");
     tokenInput.value = localStorage.getItem("lm_admin_token") || "";
@@ -352,6 +394,7 @@
           fetchMetrics(token)
         ]);
 
+        renderCommercialAlerts();
         render();
         feedback.textContent = `${allLeads.length} lead(s) carregado(s).`;
       } catch (error) {
@@ -374,6 +417,7 @@
 
       allLeads = Array.isArray(json.data) ? json.data : [];
       hydrateFilters(allLeads);
+      commercialAlerts = buildCommercialAlerts(allLeads);
     }
 
     async function fetchMetrics(token) {
@@ -423,7 +467,8 @@
         (!status || lead.status === status) &&
         (!plan || (lead.recommendedOffer || lead.recommendedPlan) === plan) &&
         inPeriod(lead.createdAt, period) &&
-        matchesFollowUpFilter(lead, followUp)
+        matchesFollowUpFilter(lead, followUp) &&
+        matchesAlertFilter(lead, activeAlertFilter)
       );
 
       $("tbody").innerHTML = rows.map(leadRow).join("");
@@ -481,6 +526,115 @@
       }
 
       return true;
+    }
+
+    function buildCommercialAlerts(leads) {
+      const alerts = {
+        overdue: 0,
+        today: 0,
+        new_stale: 0,
+        hot_no_action: 0,
+        negotiation_stale: 0
+      };
+
+      for (const lead of leads) {
+        if (matchesAlertFilter(lead, "overdue")) alerts.overdue += 1;
+        if (matchesAlertFilter(lead, "today")) alerts.today += 1;
+        if (matchesAlertFilter(lead, "new_stale")) alerts.new_stale += 1;
+        if (matchesAlertFilter(lead, "hot_no_action")) alerts.hot_no_action += 1;
+        if (matchesAlertFilter(lead, "negotiation_stale")) alerts.negotiation_stale += 1;
+      }
+
+      return alerts;
+    }
+
+    function renderCommercialAlerts() {
+      commercialAlerts = buildCommercialAlerts(allLeads);
+
+      const cards = [
+        { key: "overdue", value: commercialAlerts.overdue, label: "retornos vencidos", tone: "critical" },
+        { key: "today", value: commercialAlerts.today, label: "retornos para hoje", tone: "warn" },
+        { key: "new_stale", value: commercialAlerts.new_stale, label: "leads novos sem contato há mais de 24h", tone: "normal" },
+        { key: "hot_no_action", value: commercialAlerts.hot_no_action, label: "leads HOT sem ação", tone: "warn" },
+        { key: "negotiation_stale", value: commercialAlerts.negotiation_stale, label: "negociações paradas", tone: "critical" }
+      ];
+
+      $("commercialAlerts").innerHTML = cards.map((item) => `
+        <button class="card alert-card alert-card-${item.tone}" onclick="setAlertFilter('${item.key}')">
+          <div class="value">${item.value}</div>
+          <div class="alert-title">${item.label}</div>
+          <div class="label">Ver leads</div>
+        </button>
+      `).join("");
+    }
+
+    function isClosedOrLost(lead) {
+      return ["CLOSED", "LOST"].includes(lead.status);
+    }
+
+    function isHotLead(lead) {
+      const planText = String(lead.recommendedOffer || lead.recommendedPlan || "").toUpperCase();
+      const priorityText = String(lead.leadPriority || "").toUpperCase();
+      return (
+        planText.includes("PREMIUM") ||
+        planText.includes("PRESENCIAL") ||
+        priorityText.includes("HIGH") ||
+        priorityText.includes("HOT") ||
+        priorityText.includes("ALTA")
+      );
+    }
+
+    function hoursSince(value) {
+      const date = new Date(value);
+      if (isNaN(date)) return 0;
+      return (Date.now() - date.getTime()) / (1000 * 60 * 60);
+    }
+
+    function isSameDay(dateA, dateB) {
+      if (!dateA || !dateB) return false;
+      return dateA.toDateString() === dateB.toDateString();
+    }
+
+    function matchesAlertFilter(lead, filter) {
+      if (filter === "all") return true;
+
+      const now = new Date();
+      const followUpDate = parseFollowUpDate(lead.followUpAt);
+
+      if (filter === "overdue") {
+        return Boolean(followUpDate) && followUpDate < now && !isClosedOrLost(lead);
+      }
+
+      if (filter === "today") {
+        return Boolean(followUpDate) && isSameDay(followUpDate, now) && !isClosedOrLost(lead);
+      }
+
+      if (filter === "new_stale") {
+        return lead.status === "NEW" && hoursSince(lead.createdAt) > 24 && !isClosedOrLost(lead);
+      }
+
+      if (filter === "hot_no_action") {
+        const hasNoAction = !String(lead.notes || "").trim() && !String(lead.nextAction || "").trim();
+        return isHotLead(lead) && ["NEW", "CONTACTED"].includes(lead.status) && hasNoAction;
+      }
+
+      if (filter === "negotiation_stale") {
+        if (lead.status !== "NEGOTIATION") return false;
+        if (!followUpDate) return true;
+        return followUpDate <= now;
+      }
+
+      return true;
+    }
+
+    function setAlertFilter(filter) {
+      activeAlertFilter = filter;
+      if (filter === "overdue" || filter === "today") {
+        $("followUpFilter").value = filter;
+      } else {
+        $("followUpFilter").value = "all";
+      }
+      render();
     }
 
     function renderMetrics() {
@@ -634,6 +788,7 @@
       feedback.textContent = `Status atualizado para ${status}.`;
 
       await fetchMetrics(token);
+      renderCommercialAlerts();
       render();
     }
 
@@ -670,11 +825,13 @@
       feedback.textContent = "Dados comerciais salvos.";
 
       await fetchMetrics(token);
+      renderCommercialAlerts();
       render();
     }
 
     window.updateStatus = updateStatus;
     window.saveCommercial = saveCommercial;
+    window.setAlertFilter = setAlertFilter;
 
     function parseFollowUpDate(value) {
       if (!value) return null;
