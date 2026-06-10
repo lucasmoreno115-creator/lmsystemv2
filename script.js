@@ -7,8 +7,7 @@ const submitBtn = document.getElementById("submit-btn");
 const apiBase =
   document.querySelector('meta[name="lm-api-base"]')?.content?.replace(/\/$/, "") || "";
 
-const SESSION_MESSAGE = "Olá Lucas.\nAcabei de finalizar meu Diagnóstico LM e gostaria de agendar minha Sessão Estratégica.";
-const STRATEGIC_SESSION_LINK = `https://wa.me/5514991174500?text=${encodeURIComponent(SESSION_MESSAGE)}`;
+const WHATSAPP_NUMBER = "5514991174500";
 
 // =========================
 // SUBMIT
@@ -119,9 +118,16 @@ function renderResult(data, payload) {
   const score = Number(data.lmScore ?? 0);
   const tension = strategic.tension || resolveFallbackTension(payload.answers);
   const priority = strategic.priority || data.leadValue || resolveFallbackPriority(score, classification);
-  const coachSummary = data.coachSummary || strategic.coachSummary || strategic.copy || "Seu diagnóstico indica que o avanço depende de estratégia clara, constância e ajustes consistentes ao longo do processo.";
   const diagnosis = getDiagnosisCopy(score, classification, tension, payload.lead.goal);
-  const nextStep = buildStrategicSessionCopy(classification, tension, priority, coachSummary);
+  const bottleneckInsight = getBottleneckInsight(tension);
+  const priorityDirection = getPriorityDirection(tension, priority);
+  const whatsappLink = buildWhatsAppLink({
+    objective: getGoalLabel(payload.lead.goal),
+    classification,
+    score,
+    bottleneck: getTensionLabel(tension),
+    priority: getPriorityLabel(priority)
+  });
   const tags = Array.isArray(data.tags) ? data.tags : [];
 
   resultCard.classList.remove("hidden");
@@ -136,15 +142,15 @@ function renderResult(data, payload) {
       </div>
 
       <div class="score-panel" aria-label="Pontuação do diagnóstico">
-        <span class="badge">${formatClassification(classification)}</span>
         <strong>${score}</strong>
         <small>LM Score</small>
+        <span class="badge">${formatClassification(classification)}</span>
       </div>
     </div>
 
     <div class="insight-grid">
       <article class="insight-card">
-        <span>Principal gargalo</span>
+        <span>Principal ponto de atenção</span>
         <h3>${getTensionLabel(tension)}</h3>
         <p>${diagnosis.tensionCopy}</p>
       </article>
@@ -157,9 +163,15 @@ function renderResult(data, payload) {
     </div>
 
     <div class="coach-summary-box">
-      <span class="recommendation-label">Coach Summary</span>
-      <h3>${diagnosis.nextStepTitle}</h3>
-      <p>${coachSummary}</p>
+      <span class="recommendation-label">O que seu diagnóstico mostrou</span>
+      <h3>${bottleneckInsight.title}</h3>
+      <p>${bottleneckInsight.copy}</p>
+    </div>
+
+    <div class="priority-direction-box">
+      <span class="recommendation-label">O que faria mais diferença agora</span>
+      <h3>${priorityDirection.title}</h3>
+      <p>${priorityDirection.copy}</p>
     </div>
 
     ${tags.length ? `
@@ -168,17 +180,16 @@ function renderResult(data, payload) {
       </div>
     ` : ""}
 
-    <div class="next-step-box">
-      <span class="recommendation-label">Próximo Passo Recomendado</span>
-      <h3>Sessão Estratégica LM</h3>
-      <p>${nextStep.opening}</p>
-      <p>${nextStep.context}</p>
-      <p class="decision-copy">Por isso, o próximo passo recomendado é uma Sessão Estratégica LM, onde analisaremos seu diagnóstico e construiremos uma direção personalizada para sua realidade.</p>
+    <div class="next-step-box cta-box">
+      <span class="recommendation-label">Receba uma orientação sobre o seu caso</span>
+      <h3>Receba uma orientação sobre o seu caso</h3>
+      <p>Seu diagnóstico identificou os principais fatores que podem estar limitando seus resultados hoje.</p>
+      <p>Se quiser entender como aplicar essas informações na sua rotina e quais seriam os próximos passos mais indicados para sua situação, clique abaixo e converse comigo.</p>
     </div>
 
     <div class="result-actions single-action">
-      <a class="result-primary" href="${STRATEGIC_SESSION_LINK}" target="_blank" rel="noopener">
-        Agendar Sessão Estratégica
+      <a class="result-primary" href="${whatsappLink}" target="_blank" rel="noopener">
+        Quero receber uma orientação
       </a>
     </div>
 
@@ -215,8 +226,8 @@ function getDiagnosisCopy(score, classification, tension, goal) {
   if (score < 70) {
     return {
       title: "Você já começou, mas ainda falta consistência estratégica.",
-      intro: `Seu ponto de partida é bom, mas ainda existem gargalos claros. Para ${objective}, o que tende a destravar evolução é ajuste de rota, não mais improviso.`,
-      tensionCopy: `O diagnóstico aponta ${tensionLabel} como o principal limitador. Ajustar esse ponto tende a deixar seu progresso mais previsível.`,
+      intro: `Seu ponto de partida é bom, mas ainda existem pontos de atenção claros. Para ${objective}, o que tende a destravar evolução é ajuste de rota, não mais improviso.`,
+      tensionCopy: `O diagnóstico aponta ${tensionLabel} como o fator que mais merece atenção. Ajustar esse ponto tende a deixar seu progresso mais previsível.`,
       nextStepTitle: "Ajustar a rota",
       nextStepCopy: "A prioridade é acompanhar respostas, adesão e evolução real para transformar dados em ajustes práticos."
     };
@@ -231,15 +242,88 @@ function getDiagnosisCopy(score, classification, tension, goal) {
   };
 }
 
-function buildStrategicSessionCopy(classification, tension, priority, coachSummary) {
-  const tensionText = getTensionText(tension);
-  const classificationText = formatClassification(classification).toLowerCase();
+function getBottleneckInsight(tension) {
+  const rule = getStrategicRule(tension);
+
+  return {
+    title: rule.bottleneckTitle,
+    copy: rule.bottleneckCopy
+  };
+}
+
+function getPriorityDirection(tension, priority) {
+  const rule = getStrategicRule(tension);
   const priorityText = getPriorityText(priority);
 
   return {
-    opening: `Seu diagnóstico mostra que hoje o principal desafio está relacionado à ${tensionText}.`,
-    context: `Considerando sua classificação como ${classificationText}, sua prioridade principal é ${priorityText}. ${coachSummary} Ajustes isolados tendem a ter menos impacto quando não existe uma estratégia clara para acompanhar constância, direção e resposta do processo.`
+    title: rule.directionTitle,
+    copy: `${rule.directionCopy} Na prática, a prioridade agora é ${priorityText}, sem depender de mudanças extremas ou decisões soltas.`
   };
+}
+
+function buildWhatsAppLink({ objective, classification, score, bottleneck, priority }) {
+  const message = [
+    "Olá Lucas.",
+    "",
+    "Acabei de finalizar meu Diagnóstico LM.",
+    "",
+    `Meu objetivo é: ${objective}`,
+    "",
+    `Minha classificação foi: ${formatClassification(classification)}`,
+    "",
+    `Meu LM Score foi: ${score}`,
+    "",
+    `O principal ponto de atenção identificado foi: ${bottleneck}`,
+    "",
+    `Minha prioridade principal é: ${priority}`,
+    "",
+    "Gostaria de receber uma orientação sobre meu caso e entender quais seriam os próximos passos mais indicados para minha situação."
+  ].join("\n");
+
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+}
+
+function getStrategicRule(tension) {
+  const rules = {
+    adherence: {
+      bottleneckTitle: "Seu desafio hoje não parece ser falta de informação",
+      bottleneckCopy: "Seu diagnóstico sugere que a principal dificuldade está em transformar intenção em consistência. Você provavelmente já sabe o que deveria fazer. O desafio está em conseguir repetir essas ações por tempo suficiente para que elas produzam resultado.",
+      directionTitle: "Transformar intenção em rotina executável",
+      directionCopy: "O que mais faria diferença é simplificar a estratégia, definir poucas ações-chave e criar um ritmo possível de cumprir mesmo em semanas menos perfeitas."
+    },
+    behavior: {
+      bottleneckTitle: "Sua constância comportamental está limitando o avanço",
+      bottleneckCopy: "O diagnóstico aponta que o desafio central está em manter decisões alinhadas por tempo suficiente para que treino, alimentação e recuperação produzam resposta real.",
+      directionTitle: "Criar um processo mais previsível",
+      directionCopy: "O que mais faria diferença é reduzir improvisos, estabelecer critérios simples de acompanhamento e ajustar o plano conforme sua adesão real."
+    },
+    nutrition: {
+      bottleneckTitle: "Sua alimentação precisa de mais direção prática",
+      bottleneckCopy: "O diagnóstico mostra que a organização alimentar provavelmente é o fator que mais limita seus resultados, não por falta de esforço, mas por falta de uma estrutura simples para sustentar escolhas melhores no dia a dia.",
+      directionTitle: "Organizar a alimentação antes de apertar o treino",
+      directionCopy: "O que mais faria diferença é alinhar refeições, rotina e objetivo para melhorar adesão, energia e controle, sem transformar alimentação em restrição extrema."
+    },
+    recovery: {
+      bottleneckTitle: "Seu treino pode não ser o principal problema neste momento",
+      bottleneckCopy: "O diagnóstico sugere que recuperação, energia ou qualidade do sono estão reduzindo sua capacidade de responder bem ao processo. Quando isso acontece, mais esforço nem sempre significa mais resultado.",
+      directionTitle: "Proteger energia para evoluir com mais estabilidade",
+      directionCopy: "O que mais faria diferença é ajustar carga, descanso e rotina para que o plano seja sustentável e gere resposta, em vez de apenas acumular desgaste."
+    },
+    training: {
+      bottleneckTitle: "Seu treino precisa de mais estrutura",
+      bottleneckCopy: "O diagnóstico mostra que o treino pode não estar suficientemente organizado em frequência, progressão ou adequação ao seu momento, o que deixa a evolução menos previsível.",
+      directionTitle: "Treinar com progressão e critério",
+      directionCopy: "O que mais faria diferença é definir uma estrutura de treino coerente com seu objetivo, acompanhar execução e ajustar volume, intensidade e frequência com método."
+    },
+    clinical: {
+      bottleneckTitle: "Dores ou limitações precisam entrar na estratégia",
+      bottleneckCopy: "O diagnóstico sinaliza que algum desconforto ou limitação pode estar interferindo na constância e na qualidade do processo.",
+      directionTitle: "Ajustar o plano para preservar continuidade",
+      directionCopy: "O que mais faria diferença é adaptar treino, recuperação e evolução de carga para reduzir atritos e manter o processo seguro e executável."
+    }
+  };
+
+  return rules[tension] || rules.adherence;
 }
 
 function resolveFallbackTension(answers) {
@@ -295,9 +379,9 @@ function getTensionText(tension) {
 
 function getPriorityLabel(priority) {
   const labels = {
-    high: "Acompanhamento próximo",
-    medium: "Ajustes consistentes",
-    low: "Direção inicial"
+    high: "Otimização Estratégica",
+    medium: "Construção da Base",
+    low: "Direção Inicial"
   };
 
   return labels[String(priority || "").toLowerCase()] || "Clareza estratégica";
@@ -305,8 +389,8 @@ function getPriorityLabel(priority) {
 
 function getPriorityText(priority) {
   const labels = {
-    high: "ter acompanhamento próximo para ajustar o processo com mais precisão",
-    medium: "criar ajustes consistentes e sustentáveis para sua rotina",
+    high: "avançar com otimização estratégica para ajustar o processo com mais precisão",
+    medium: "construir uma base mais consistente e sustentável para sua rotina",
     low: "ganhar direção inicial antes de aumentar complexidade"
   };
 

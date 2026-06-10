@@ -341,7 +341,7 @@
           <th>Classificação</th>
           <th>Lead Value</th>
           <th>Prioridade</th>
-          <th>Gargalo</th>
+          <th>Ponto de atenção</th>
           <th>Data</th>
           <th>Status</th>
           <th>Comercial</th>
@@ -700,14 +700,14 @@
 
     function leadRow(lead) {
       const number = normalizePhone(lead.whatsapp || "");
-      const gargalo = lead.mainBottleneck || "não informado";
+      const pontoAtencao = lead.mainBottleneck || "não informado";
 
       const extra = lead.nextAction
         ? ` Anotei aqui que o próximo passo seria: ${lead.nextAction}.`
         : "";
 
       const msg =
-        `Olá, ${lead.nome || ""}. Vi seu diagnóstico no Método LM e seu principal ponto hoje parece ser ${gargalo}. ` +
+        `Olá, ${lead.nome || ""}. Vi seu diagnóstico no Método LM e seu principal ponto de atenção hoje parece ser ${pontoAtencao}. ` +
         `Posso te explicar rapidamente qual seria o melhor próximo passo para o seu caso?${extra}`;
 
       const waUrl = `https://wa.me/${number}?text=${encodeURIComponent(msg.slice(0, 500))}`;
@@ -731,7 +731,7 @@
           <td data-label="Classificação">${esc(lead.classification || "")}</td>
           <td data-label="Lead Value">${esc(lead.leadValue || lead.leadPriority || "-")}</td>
           <td data-label="Prioridade">${esc(lead.leadPriority || "-")}</td>
-          <td data-label="Gargalo">${esc(gargalo)}</td>
+          <td data-label="Ponto de atenção">${esc(pontoAtencao)}</td>
           <td data-label="Data">${fmtDate(lead.createdAt)}</td>
           <td data-label="Status">${statusSelect}</td>
           <td data-label="Comercial">
