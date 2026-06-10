@@ -7,12 +7,8 @@ const submitBtn = document.getElementById("submit-btn");
 const apiBase =
   document.querySelector('meta[name="lm-api-base"]')?.content?.replace(/\/$/, "") || "";
 
-const LINKS = {
-  start: "https://pages.mfitpersonal.com.br/p/2i28?checkout=true",
-  premium: "https://pages.mfitpersonal.com.br/p/gwa?checkout=true",
-  presencial: "https://wa.me/5514991174500?text=Olá,%20Lucas.%20fiz%20o%20diagnóstico%20LM%20e%20quero%20entender%20a%20consultoria%20presencial.",
-  whatsapp: "https://wa.me/5514991174500?text=Olá,%20Lucas.%20fiz%20o%20diagnóstico%20LM%20e%20quero%20uma%20orientação%20sobre%20meu%20resultado."
-};
+const SESSION_MESSAGE = "Olá Lucas.\nAcabei de finalizar meu Diagnóstico LM e gostaria de agendar minha Sessão Estratégica.";
+const STRATEGIC_SESSION_LINK = `https://wa.me/5514991174500?text=${encodeURIComponent(SESSION_MESSAGE)}`;
 
 // =========================
 // SUBMIT
@@ -114,7 +110,7 @@ function validatePayload(payload) {
 
 
 // =========================
-// RENDER RESULT - VERSÃO COMERCIAL
+// RENDER RESULT - SESSÃO ESTRATÉGICA LM
 // =========================
 
 function renderResult(data, payload) {
@@ -122,9 +118,11 @@ function renderResult(data, payload) {
   const classification = data.classification || "DIAGNOSTICO_LM";
   const score = Number(data.lmScore ?? 0);
   const tension = strategic.tension || resolveFallbackTension(payload.answers);
-  const offer = strategic.offer || resolveFallbackOffer(score, classification);
-  const offerConfig = getOfferConfig(offer, score, classification);
+  const priority = strategic.priority || data.leadValue || resolveFallbackPriority(score, classification);
+  const coachSummary = data.coachSummary || strategic.coachSummary || strategic.copy || "Seu diagnóstico indica que o avanço depende de estratégia clara, constância e ajustes consistentes ao longo do processo.";
   const diagnosis = getDiagnosisCopy(score, classification, tension, payload.lead.goal);
+  const nextStep = buildStrategicSessionCopy(classification, tension, priority, coachSummary);
+  const tags = Array.isArray(data.tags) ? data.tags : [];
 
   resultCard.classList.remove("hidden");
 
@@ -152,37 +150,39 @@ function renderResult(data, payload) {
       </article>
 
       <article class="insight-card">
-        <span>Próximo movimento</span>
-        <h3>${diagnosis.nextStepTitle}</h3>
+        <span>Prioridade principal</span>
+        <h3>${getPriorityLabel(priority)}</h3>
         <p>${diagnosis.nextStepCopy}</p>
       </article>
     </div>
 
-    <div class="recommendation-box">
-      <span class="recommendation-label">Plano recomendado</span>
-      <h3>${offerConfig.title}</h3>
-      <p>${offerConfig.reason}</p>
-      <p class="decision-copy">${offerConfig.decision}</p>
-      <ul>
-        ${offerConfig.bullets.map((bullet) => `<li>${bullet}</li>`).join("")}
-      </ul>
+    <div class="coach-summary-box">
+      <span class="recommendation-label">Coach Summary</span>
+      <h3>${diagnosis.nextStepTitle}</h3>
+      <p>${coachSummary}</p>
     </div>
 
-    <div class="urgency-box">
-      <strong>${offerConfig.urgencyTitle}</strong>
-      <p>${offerConfig.urgencyCopy}</p>
+    ${tags.length ? `
+      <div class="tags-box" aria-label="Tags do diagnóstico">
+        ${tags.map((tag) => `<span>${formatTag(tag)}</span>`).join("")}
+      </div>
+    ` : ""}
+
+    <div class="next-step-box">
+      <span class="recommendation-label">Próximo Passo Recomendado</span>
+      <h3>Sessão Estratégica LM</h3>
+      <p>${nextStep.opening}</p>
+      <p>${nextStep.context}</p>
+      <p class="decision-copy">Por isso, o próximo passo recomendado é uma Sessão Estratégica LM, onde analisaremos seu diagnóstico e construiremos uma direção personalizada para sua realidade.</p>
     </div>
 
-    <div class="result-actions">
-      <a class="result-primary" href="${offerConfig.href}" target="_blank" rel="noopener">
-        ${offerConfig.cta}
+    <div class="result-actions single-action">
+      <a class="result-primary" href="${STRATEGIC_SESSION_LINK}" target="_blank" rel="noopener">
+        Agendar Sessão Estratégica
       </a>
-      <a class="result-secondary" href="${LINKS.whatsapp}" target="_blank" rel="noopener">
-        Quero orientação personalizada
-      </a>
     </div>
 
-    <p class="result-disclaimer">Este diagnóstico não substitui avaliação clínica individual. Ele serve para orientar o melhor ponto de partida dentro do Método LM.</p>
+    <p class="result-disclaimer">Este diagnóstico não substitui avaliação clínica individual. Ele serve para orientar clareza, direção e os próximos ajustes dentro do Método LM.</p>
   `;
 
   resultCard.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -196,9 +196,9 @@ function getDiagnosisCopy(score, classification, tension, goal) {
     return {
       title: "Seu resultado pede estratégia antes de intensidade.",
       intro: `Seu diagnóstico mostrou que existe potencial de evolução, mas o momento exige cuidado, organização e direção. Para ${objective}, o caminho mais inteligente não é apertar mais. É ajustar melhor.`,
-      tensionCopy: `O ponto que mais pesa agora é ${tensionLabel}. Ignorar isso pode tornar o processo mais instável, mais cansativo e mais difícil de manter.`,
+      tensionCopy: `O ponto que mais pesa agora é ${tensionLabel}. Observar esse fator ajuda a tornar o processo mais claro, sustentável e possível de acompanhar.`,
       nextStepTitle: "Construir uma base segura",
-      nextStepCopy: "Antes de buscar um plano agressivo, o ideal é organizar rotina, treino e alimentação com acompanhamento próximo."
+      nextStepCopy: "A prioridade é organizar rotina, treino e alimentação com clareza, acompanhamento e ajustes consistentes."
     };
   }
 
@@ -206,109 +206,40 @@ function getDiagnosisCopy(score, classification, tension, goal) {
     return {
       title: "Você não precisa de mais tentativa. Precisa de direção.",
       intro: `Seu diagnóstico indica que o principal problema não é falta de vontade. É falta de estrutura simples e executável para ${objective}.`,
-      tensionCopy: `Hoje, ${tensionLabel} provavelmente é o fator que mais limita sua evolução. Sem corrigir isso, qualquer plano tende a virar mais um recomeço.`,
+      tensionCopy: `Hoje, ${tensionLabel} provavelmente é o fator que mais limita sua evolução. Corrigir esse ponto dá mais previsibilidade ao processo.`,
       nextStepTitle: "Começar com clareza",
-      nextStepCopy: "O melhor movimento é ter uma estratégia inicial objetiva, com treino e nutrição organizados para sua rotina real."
+      nextStepCopy: "A prioridade é definir uma estratégia inicial objetiva, conectada à sua rotina real e ajustável ao longo do caminho."
     };
   }
 
   if (score < 70) {
     return {
       title: "Você já começou, mas ainda falta consistência estratégica.",
-      intro: `Seu ponto de partida é bom, mas ainda existem gargalos claros. Para ${objective}, o que vai destravar resultado é ajuste de rota, não mais improviso.`,
-      tensionCopy: `O diagnóstico aponta ${tensionLabel} como o principal limitador. Corrigir esse ponto tende a deixar seu progresso mais previsível.`,
+      intro: `Seu ponto de partida é bom, mas ainda existem gargalos claros. Para ${objective}, o que tende a destravar evolução é ajuste de rota, não mais improviso.`,
+      tensionCopy: `O diagnóstico aponta ${tensionLabel} como o principal limitador. Ajustar esse ponto tende a deixar seu progresso mais previsível.`,
       nextStepTitle: "Ajustar a rota",
-      nextStepCopy: "Você precisa de um processo acompanhado, com ajustes conforme resposta, adesão e evolução real."
+      nextStepCopy: "A prioridade é acompanhar respostas, adesão e evolução real para transformar dados em ajustes práticos."
     };
   }
 
   return {
     title: "Você tem uma boa base. Agora precisa refinar a estratégia.",
     intro: `Seu diagnóstico mostra uma base favorável para ${objective}. O próximo nível depende menos de esforço aleatório e mais de precisão nos ajustes.`,
-    tensionCopy: `Mesmo com boa base, ${tensionLabel} ainda aparece como ponto de atenção. Refinar isso pode acelerar o resultado sem precisar de extremos.`,
+    tensionCopy: `Mesmo com boa base, ${tensionLabel} ainda aparece como ponto de atenção. Refinar isso ajuda a evoluir com mais constância e menos extremos.`,
     nextStepTitle: "Otimizar com acompanhamento",
-    nextStepCopy: "O melhor caminho é usar sua base atual com método, progressão e monitoramento estratégico."
+    nextStepCopy: "A prioridade é usar sua base atual com método, progressão, monitoramento e ajustes mais precisos."
   };
 }
 
-function getOfferConfig(offer, score, classification) {
-  const isLowBase = score < 50 || classification === "BASE_EM_CONSTRUCAO";
+function buildStrategicSessionCopy(classification, tension, priority, coachSummary) {
+  const tensionText = getTensionText(tension);
+  const classificationText = formatClassification(classification).toLowerCase();
+  const priorityText = getPriorityText(priority);
 
-  const configs = {
-    PLANO_ESTRUTURADO: {
-      title: "Plano Start",
-      href: LINKS.start,
-      cta: "Quero começar com direção",
-      reason: "Seu momento não pede mais intensidade. Pede estrutura.",
-      decision: "Hoje, o principal bloqueio não está na sua força de vontade. Está na falta de consistência entre treino, rotina e estratégia alimentar. Por isso, o melhor caminho agora não é começar pelo plano mais complexo. É começar pelo plano certo. O Plano Start organiza sua base, cria direção e transforma tentativa em processo.",
-      urgencyTitle: "O primeiro passo certo vale mais do que o plano mais caro.",
-      urgencyCopy: "Quanto mais tempo você continua sem uma estratégia clara, mais energia gasta recomeçando. O objetivo aqui não é tentar mais uma vez. É construir um processo sustentável.",
-      bullets: [
-        "Avaliação inicial",
-        "Treino personalizado",
-        "Direcionamento nutricional",
-        "Estratégia inicial com 1 atendimento para dúvidas"
-      ]
-    },
-    CONSULTORIA_ONLINE: {
-      title: "Consultoria Premium LM",
-      href: LINKS.premium,
-      cta: "Quero acompanhamento real",
-      reason: "Seu perfil mostra que apenas receber um plano provavelmente não será suficiente.",
-      decision: "Você já tem ponto de partida, mas ainda precisa de acompanhamento, ajustes e proximidade para não depender de motivação. A Premium LM é indicada quando o resultado depende menos de saber o que fazer e mais de manter execução com direção.",
-      urgencyTitle: "Seu gargalo não é falta de informação. É falta de acompanhamento estratégico.",
-      urgencyCopy: "Sem ajuste de rota, o processo fica vulnerável a rotina, estresse e oscilações de adesão. Com acompanhamento, cada semana vira dado para corrigir e avançar.",
-      bullets: [
-        "Diagnóstico + estratégia individual",
-        "Acompanhamento contínuo",
-        "Ajustes semanais conforme evolução",
-        "Suporte estratégico direto"
-      ]
-    },
-    CONSULTORIA_PREMIUM: {
-      title: "Consultoria Premium LM",
-      href: LINKS.premium,
-      cta: "Entrar para a Premium LM",
-      reason: "Esse é o caminho mais indicado quando o objetivo exige direção, constância e acompanhamento real.",
-      decision: "Seu perfil pede uma estratégia mais próxima, com treino, nutrição e ajustes contínuos. Aqui, o objetivo não é entregar mais uma rotina. É conduzir sua execução para que o plano funcione dentro da sua vida real.",
-      urgencyTitle: "Você não precisa de mais uma tentativa isolada.",
-      urgencyCopy: "Quando existe acompanhamento, o processo deixa de depender de perfeição e passa a depender de correção de rota. É isso que sustenta resultado.",
-      bullets: [
-        "Consultoria presencial inicial",
-        "Treino individualizado",
-        "Estratégia nutricional personalizada",
-        "Acompanhamento e ajustes contínuos"
-      ]
-    },
-    CONSULTORIA_PRESENCIAL: {
-      title: "Consultoria Presencial LM",
-      href: LINKS.presencial,
-      cta: "Solicitar avaliação presencial",
-      reason: "Seu perfil se beneficia de maior proximidade, avaliação técnica e correção ao vivo.",
-      decision: "Quando existem limitações, insegurança técnica ou necessidade de acompanhamento mais próximo, o presencial reduz erro de execução e aumenta precisão no processo.",
-      urgencyTitle: "O presencial é indicado quando segurança e correção precisam vir antes de intensidade.",
-      urgencyCopy: "A estratégia fica mais eficiente quando o treino é observado, corrigido e ajustado em tempo real.",
-      bullets: [
-        "Avaliação física e postural",
-        "Treino guiado",
-        "Correção técnica em tempo real",
-        "Estratégia individualizada completa"
-      ]
-    }
+  return {
+    opening: `Seu diagnóstico mostra que hoje o principal desafio está relacionado à ${tensionText}.`,
+    context: `Considerando sua classificação como ${classificationText}, sua prioridade principal é ${priorityText}. ${coachSummary} Ajustes isolados tendem a ter menos impacto quando não existe uma estratégia clara para acompanhar constância, direção e resposta do processo.`
   };
-
-  if (isLowBase && offer === "CONSULTORIA_ONLINE") {
-    return configs.CONSULTORIA_PREMIUM;
-  }
-
-  return configs[offer] || configs.CONSULTORIA_PREMIUM;
-}
-
-function resolveFallbackOffer(score, classification) {
-  if (classification === "BASE_EM_RISCO") return "CONSULTORIA_PREMIUM";
-  if (score < 50) return "PLANO_ESTRUTURADO";
-  if (score < 75) return "CONSULTORIA_ONLINE";
-  return "CONSULTORIA_PREMIUM";
 }
 
 function resolveFallbackTension(answers) {
@@ -322,6 +253,12 @@ function resolveFallbackTension(answers) {
   };
 
   return Object.entries(groups).sort((a, b) => a[1] - b[1])[0]?.[0] || "adherence";
+}
+
+function resolveFallbackPriority(score, classification) {
+  if (classification === "BASE_EM_RISCO" || score >= 70) return "high";
+  if (score >= 50) return "medium";
+  return "low";
 }
 
 function average(values) {
@@ -341,6 +278,51 @@ function getTensionLabel(tension) {
   };
 
   return labels[tension] || "Estratégia atual";
+}
+
+function getTensionText(tension) {
+  const labels = {
+    adherence: "consistência da rotina",
+    nutrition: "organização alimentar",
+    training: "estrutura do treino",
+    recovery: "recuperação e energia",
+    clinical: "necessidade de ajustar dores ou limitações",
+    behavior: "constância comportamental"
+  };
+
+  return labels[tension] || "clareza da estratégia atual";
+}
+
+function getPriorityLabel(priority) {
+  const labels = {
+    high: "Acompanhamento próximo",
+    medium: "Ajustes consistentes",
+    low: "Direção inicial"
+  };
+
+  return labels[String(priority || "").toLowerCase()] || "Clareza estratégica";
+}
+
+function getPriorityText(priority) {
+  const labels = {
+    high: "ter acompanhamento próximo para ajustar o processo com mais precisão",
+    medium: "criar ajustes consistentes e sustentáveis para sua rotina",
+    low: "ganhar direção inicial antes de aumentar complexidade"
+  };
+
+  return labels[String(priority || "").toLowerCase()] || "ganhar clareza sobre os próximos ajustes";
+}
+
+function formatTag(tag) {
+  const labels = {
+    low_consistency: "baixa consistência",
+    nutrition_attention: "atenção alimentar",
+    recovery_attention: "recuperação",
+    pain_attention: "dor/limitação",
+    high_motivation: "alta disposição"
+  };
+
+  return labels[tag] || String(tag).replace(/_/g, " ");
 }
 
 function getGoalLabel(goal) {

@@ -23,7 +23,6 @@ CREATE TABLE IF NOT EXISTS diagnostic_results (
   weights_json TEXT,
   tags_json TEXT,
   client_state TEXT,
-  recommended_offer TEXT,
   lead_priority TEXT,
   strategic_result_json TEXT,
   raw_answers_json TEXT,
@@ -46,7 +45,6 @@ SELECT
   l.goal,
   d.lm_score,
   d.classification,
-  d.recommended_offer,
   d.lead_priority,
   d.created_at
 FROM leads l

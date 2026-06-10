@@ -302,9 +302,6 @@
         <option value="">Todos status</option>
       </select>
 
-      <select id="planFilter">
-        <option value="">Todos planos</option>
-      </select>
 
       <select id="followUpFilter">
         <option value="all">Retornos pendentes: Todos</option>
@@ -334,9 +331,6 @@
     <h2>Qualidade do lead</h2>
     <section id="qualityMetrics" class="grid"></section>
 
-    <h2>Planos recomendados</h2>
-    <section id="plansMetrics" class="grid"></section>
-
     <table>
       <thead>
         <tr>
@@ -345,7 +339,7 @@
           <th>Objetivo</th>
           <th>LM Score</th>
           <th>Classificação</th>
-          <th>Plano</th>
+          <th>Lead Value</th>
           <th>Prioridade</th>
           <th>Gargalo</th>
           <th>Data</th>
@@ -380,7 +374,6 @@
 
     $("loadLeads").onclick = loadDashboard;
     $("statusFilter").onchange = render;
-    $("planFilter").onchange = render;
     $("periodFilter").onchange = loadDashboard;
     $("followUpFilter").onchange = render;
     $("previewAlerts").onclick = previewAlertsMessage;
@@ -490,28 +483,15 @@
         '<option value="">Todos status</option>' +
         statusList.map((status) => `<option value="${status}">${status}</option>`).join("");
 
-      const plans = [
-        ...new Set(
-          leads
-            .map((lead) => lead.recommendedOffer || lead.recommendedPlan)
-            .filter(Boolean)
-        )
-      ];
-
-      $("planFilter").innerHTML =
-        '<option value="">Todos planos</option>' +
-        plans.map((plan) => `<option value="${esc(plan)}">${esc(plan)}</option>`).join("");
     }
 
     function render() {
       const status = $("statusFilter").value;
-      const plan = $("planFilter").value;
       const period = $("periodFilter").value;
       const followUp = $("followUpFilter").value;
 
       const rows = allLeads.filter((lead) =>
         (!status || lead.status === status) &&
-        (!plan || (lead.recommendedOffer || lead.recommendedPlan) === plan) &&
         inPeriod(lead.createdAt, period) &&
         matchesFollowUpFilter(lead, followUp) &&
         matchesAlertFilter(lead, activeAlertFilter)
@@ -619,11 +599,8 @@
     }
 
     function isHotLead(lead) {
-      const planText = String(lead.recommendedOffer || lead.recommendedPlan || "").toUpperCase();
-      const priorityText = String(lead.leadPriority || "").toUpperCase();
+      const priorityText = String(lead.leadPriority || lead.leadValue || "").toUpperCase();
       return (
-        planText.includes("PREMIUM") ||
-        planText.includes("PRESENCIAL") ||
         priorityText.includes("HIGH") ||
         priorityText.includes("HOT") ||
         priorityText.includes("ALTA")
@@ -688,15 +665,11 @@
 
       const overview = currentMetrics.overview || {};
       const pipeline = currentMetrics.pipeline || {};
-      const revenue = currentMetrics.revenue || {};
-
       $("mainMetrics").innerHTML = [
         card("Leads hoje", overview.leadsToday || 0),
         card("Leads no mês", overview.leadsThisMonth || 0),
         card("Em negociação", overview.negotiationThisMonth || 0),
-        card("Fechados no mês", overview.closedThisMonth || 0),
-        card("Receita estimada mês", money(revenue.closedRevenueThisMonth || 0)),
-        card("Pipeline estimado", money(revenue.estimatedPipelineValue || 0))
+        card("Fechados no mês", overview.closedThisMonth || 0)
       ].join("");
 
       $("pipelineMetrics").innerHTML = statusList
@@ -714,16 +687,6 @@
           </article>
         `)
         .join("");
-
-      $("plansMetrics").innerHTML = (currentMetrics.recommendedPlans || [])
-        .map((item) => `
-          <article class="card">
-            <div class="label">${esc(item.plan)}</div>
-            <div class="value">${item.count}</div>
-            <div class="label">${item.percentage}%</div>
-          </article>
-        `)
-        .join("");
     }
 
     function card(label, value) {
@@ -733,13 +696,6 @@
           <div class="value">${value}</div>
         </article>
       `;
-    }
-
-    function money(value) {
-      return new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL"
-      }).format(value || 0);
     }
 
     function leadRow(lead) {
@@ -773,7 +729,7 @@
           <td data-label="Objetivo">${esc(lead.objetivo || "")}</td>
           <td data-label="LM Score">${lead.lmScore ?? "-"}</td>
           <td data-label="Classificação">${esc(lead.classification || "")}</td>
-          <td data-label="Plano">${esc(lead.recommendedOffer || lead.recommendedPlan || "-")}</td>
+          <td data-label="Lead Value">${esc(lead.leadValue || lead.leadPriority || "-")}</td>
           <td data-label="Prioridade">${esc(lead.leadPriority || "-")}</td>
           <td data-label="Gargalo">${esc(gargalo)}</td>
           <td data-label="Data">${fmtDate(lead.createdAt)}</td>

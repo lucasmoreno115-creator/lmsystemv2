@@ -1,8 +1,4 @@
 
-const START_PRICE = 59.90;
-const PREMIUM_PRICE = 229.90;
-const PRESENCIAL_PRICE = 440.00;
-
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -59,7 +55,6 @@ export default {
               l.status AS lead_status,
               dr.lm_score,
               dr.classification,
-              dr.recommended_offer,
               dr.lead_priority,
               dr.strategic_result_json,
               dr.meta_json,
@@ -86,8 +81,7 @@ export default {
               objetivo: row.goal || "",
               lmScore: row.lm_score ?? null,
               classification: row.classification || "",
-              recommendedOffer: row.recommended_offer || strategic.offer || null,
-              recommendedPlan: row.recommended_offer || strategic.offer || null,
+              leadValue: row.lead_priority || strategic.priority || null,
               leadPriority: row.lead_priority || strategic.priority || null,
               mainBottleneck: strategic.tension || meta.mainBottleneck || meta.principalGargalo || null,
               createdAt: row.diagnostic_created_at || row.lead_created_at || null,
@@ -117,7 +111,6 @@ export default {
               l.id AS lead_id,
               l.status AS lead_status,
               l.created_at AS lead_created_at,
-              dr.recommended_offer,
               dr.lead_priority,
               dr.strategic_result_json,
               dr.created_at AS diagnostic_created_at
@@ -293,14 +286,13 @@ export default {
           weights_json,
           tags_json,
           client_state,
-          recommended_offer,
           lead_priority,
           strategic_result_json,
           raw_answers_json,
           meta_json,
           created_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
       .bind(
         crypto.randomUUID(),
@@ -312,7 +304,6 @@ export default {
         JSON.stringify(result.weights),
         JSON.stringify(tags),
         classification,
-        strategic.offer,
         strategic.priority,
         JSON.stringify(strategic),
         JSON.stringify(normalized.answers),
@@ -328,7 +319,9 @@ export default {
           lmScore: result.lmScore,
           classification,
           dimensions: result.dimensions,
-          recommendedOffer: strategic.offer,
+          coachSummary: strategic.coachSummary,
+          leadValue: strategic.priority,
+          tags,
           strategic
         }
       }, 200, corsHeaders);
@@ -389,7 +382,6 @@ async function generateCommercialAlerts(db) {
       l.next_action,
       l.follow_up_at,
       l.created_at,
-      dr.recommended_offer,
       dr.lead_priority,
       dr.strategic_result_json
     FROM leads l
@@ -408,7 +400,6 @@ async function generateCommercialAlerts(db) {
       leadId: row.lead_id,
       nome: row.name || "",
       whatsapp: row.whatsapp || "",
-      recommendedOffer: row.recommended_offer || strategic.offer || "",
       leadPriority: row.lead_priority || strategic.priority || "",
       status: cleanString(row.status).toUpperCase() || "NEW",
       mainBottleneck: strategic.tension || null,
@@ -442,7 +433,7 @@ async function generateCommercialAlerts(db) {
       leadId: lead.leadId,
       nome: lead.nome,
       whatsapp: lead.whatsapp,
-      recommendedOffer: lead.recommendedOffer,
+      leadValue: lead.leadPriority,
       leadPriority: lead.leadPriority,
       status: lead.status,
       mainBottleneck: lead.mainBottleneck,
@@ -474,16 +465,15 @@ function resolveAlertTypes(lead, now) {
 }
 
 function isHotLeadRule(lead) {
-  const offerText = cleanString(lead.recommendedOffer).toUpperCase();
   const priorityText = cleanString(lead.leadPriority).toUpperCase();
-  return offerText.includes("PREMIUM") || offerText.includes("PRESENCIAL") || ["HIGH", "HOT", "ALTA"].some((v) => priorityText.includes(v));
+  return ["HIGH", "HOT", "ALTA"].some((v) => priorityText.includes(v));
 }
 
 function buildDailyAlertMessage(alertData) {
   const summary = alertData.summary || {};
   const priority = (alertData.priorityLeads || []).slice(0, 3);
   const lines = priority.length
-    ? priority.map((lead, idx) => `${idx + 1}. ${lead.nome || "Lead sem nome"} — ${lead.recommendedOffer || "Sem plano"} — ${formatAlertTypeLabel(lead.alertType)}`)
+    ? priority.map((lead, idx) => `${idx + 1}. ${lead.nome || "Lead sem nome"} — ${lead.leadValue || lead.leadPriority || "Sem prioridade"} — ${formatAlertTypeLabel(lead.alertType)}`)
     : ["1. Sem leads prioritários no momento."];
 
   return [
@@ -716,33 +706,22 @@ function buildTags(payload) {
 
 function resolveStrategicResult(score, d, goal, classification) {
   const tension = resolveMainTension(d);
-  const offer = resolveOffer(score, d, goal, classification);
   const priority = resolvePriority(score, d, classification);
   const headline = resolveHeadline(score, goal, tension);
   const copy = resolveCopy(score, tension, goal);
-  const cta = resolveCTA(offer);
 
   return {
     tension,
-    offer,
     priority,
     headline,
     copy,
-    cta
+    coachSummary: copy
   };
 }
 
 function resolveMainTension(dimensions) {
   return Object.entries(dimensions)
     .sort((a, b) => a[1] - b[1])[0][0];
-}
-
-function resolveOffer(score, d, goal, classification) {
-  if (classification === "BASE_EM_RISCO") return "CONSULTORIA_PREMIUM";
-  if (score < 50) return "PLANO_ESTRUTURADO";
-  if (goal === "saude_condicionamento" && d.clinical < 60) return "CONSULTORIA_PRESENCIAL";
-  if (score < 75) return "CONSULTORIA_ONLINE";
-  return "CONSULTORIA_PREMIUM";
 }
 
 function resolvePriority(score, d, classification) {
@@ -790,32 +769,6 @@ function resolveCopy(score, tension, goal) {
   return `Seu ponto de partida é bom. Agora, pequenos ajustes em ${problem} podem acelerar o processo e deixar o caminho para ${objective} mais eficiente.`;
 }
 
-function resolveCTA(offer) {
-  const ctas = {
-    PLANO_ESTRUTURADO: {
-      label: "Conhecer o plano estruturado",
-      href: "./plano-estruturado.html"
-    },
-    CONSULTORIA_ONLINE: {
-      label: "Conhecer a consultoria premium",
-      href: "./consultoria-premium.html"
-    },
-    CONSULTORIA_PREMIUM: {
-      label: "Quero acompanhamento premium",
-      href: "./consultoria-premium.html"
-    },
-    CONSULTORIA_PRESENCIAL: {
-      label: "Conhecer o atendimento presencial",
-      href: "./consultoria-presencial.html"
-    }
-  };
-
-  return ctas[offer] || {
-    label: "Conhecer os planos",
-    href: "./planos.html"
-  };
-}
-
 async function ensureSchema(db) {
   await db.prepare(`
     CREATE TABLE IF NOT EXISTS leads (
@@ -844,7 +797,6 @@ async function ensureSchema(db) {
       weights_json TEXT,
       tags_json TEXT,
       client_state TEXT,
-      recommended_offer TEXT,
       lead_priority TEXT,
       strategic_result_json TEXT,
       raw_answers_json TEXT,
@@ -856,7 +808,6 @@ async function ensureSchema(db) {
   await ensureColumn(db, "diagnostic_results", "weights_json", "TEXT");
   await ensureColumn(db, "diagnostic_results", "tags_json", "TEXT");
   await ensureColumn(db, "diagnostic_results", "client_state", "TEXT");
-  await ensureColumn(db, "diagnostic_results", "recommended_offer", "TEXT");
   await ensureColumn(db, "diagnostic_results", "lead_priority", "TEXT");
   await ensureColumn(db, "diagnostic_results", "strategic_result_json", "TEXT");
   await ensureColumn(db, "diagnostic_results", "raw_answers_json", "TEXT");
@@ -885,7 +836,6 @@ function buildMetrics(rows, period) {
     return {
       createdAt: row.lead_created_at,
       status,
-      recommendedOffer: row.recommended_offer || strategic.offer || "",
       leadPriority: row.lead_priority || strategic.priority || ""
     };
   });
@@ -917,27 +867,13 @@ function buildMetrics(rows, period) {
     lossRate: toPercent(pipeline.LOST / (totalLeads || 1))
   };
 
-  const planBuckets = { "Plano Start": 0, "Consultoria Premium": 0, "Consultoria Presencial": 0, "Outros/Sem plano": 0 };
   const qualityBuckets = { HOT: 0, WARM: 0, COLD: 0 };
 
-  let estimatedPipelineValue = 0;
-  let closedRevenueThisMonth = 0;
-
   for (const lead of filtered) {
-    const plan = normalizePlan(lead.recommendedOffer);
-    planBuckets[plan] += 1;
-
-    const quality = classifyLeadQuality(lead.recommendedOffer, lead.leadPriority);
+    const quality = classifyLeadQuality(lead.leadPriority);
     qualityBuckets[quality] += 1;
-
-    const price = resolveOfferPrice(lead.recommendedOffer);
-    if (["NEW", "CONTACTED", "NEGOTIATION"].includes(lead.status)) estimatedPipelineValue += price;
-
-    // Limitação: como ainda não há closed_at, usamos created_at como aproximação para fechamentos do mês.
-    if (lead.status === "CLOSED" && isInPeriod(lead.createdAt, now, "month")) closedRevenueThisMonth += price;
   }
 
-  const recommendedPlans = Object.entries(planBuckets).map(([plan, count]) => ({ plan, count, percentage: toPercent(count / (totalLeads || 1)) }));
   const leadQuality = Object.entries(qualityBuckets).map(([bucket, count]) => ({ bucket, count, percentage: toPercent(count / (totalLeads || 1)) }));
 
   return {
@@ -945,14 +881,7 @@ function buildMetrics(rows, period) {
     overview,
     pipeline,
     conversion,
-    recommendedPlans,
-    leadQuality,
-    revenue: {
-      estimatedPipelineValue: round2(estimatedPipelineValue),
-      closedRevenueThisMonth: round2(closedRevenueThisMonth),
-      averageTicketClosed: round2(closedRevenueThisMonth / (overview.closedThisMonth || 1))
-    },
-    pricing: { START_PRICE, PREMIUM_PRICE, PRESENCIAL_PRICE }
+    leadQuality
   };
 }
 
@@ -979,27 +908,11 @@ function isInPeriod(dateValue, now, period) {
   return true;
 }
 
-function normalizePlan(offer) {
-  const text = cleanString(offer).toUpperCase();
-  if (text.includes("PRESENCIAL")) return "Consultoria Presencial";
-  if (text.includes("PREMIUM") || text.includes("ONLINE")) return "Consultoria Premium";
-  if (text.includes("START") || text.includes("ESTRUTURADO")) return "Plano Start";
-  return "Outros/Sem plano";
-}
-
-function classifyLeadQuality(offer, priority) {
-  const offerText = cleanString(offer).toUpperCase();
+function classifyLeadQuality(priority) {
   const priorityText = cleanString(priority).toUpperCase();
-  if (offerText.includes("PREMIUM") || offerText.includes("PRESENCIAL") || ["HIGH", "HOT", "ALTA"].some((v) => priorityText.includes(v))) return "HOT";
-  if (offerText.includes("START") || ["MEDIUM", "MEDIA", "MÉDIA"].some((v) => priorityText.includes(v))) return "WARM";
+  if (["HIGH", "HOT", "ALTA"].some((v) => priorityText.includes(v))) return "HOT";
+  if (["MEDIUM", "MEDIA", "MÉDIA"].some((v) => priorityText.includes(v))) return "WARM";
   return "COLD";
-}
-
-function resolveOfferPrice(offer) {
-  const text = cleanString(offer).toUpperCase();
-  if (text.includes("PRESENCIAL")) return PRESENCIAL_PRICE;
-  if (text.includes("PREMIUM") || text.includes("ONLINE")) return PREMIUM_PRICE;
-  return START_PRICE;
 }
 
 function toPercent(value) { return round1((value || 0) * 100); }
