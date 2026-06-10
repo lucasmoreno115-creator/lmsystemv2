@@ -7,14 +7,14 @@ const CORS_HEADERS = {
 
 export default {
   async fetch(request, env) {
-    const url = new URL(request.url);
-
     if (request.method === "OPTIONS") {
       return new Response(null, {
         status: 204,
         headers: CORS_HEADERS
       });
     }
+
+    const url = new URL(request.url);
 
     try {
       if (request.method === "GET" && url.pathname === "/api/health") {
@@ -944,9 +944,9 @@ function jsonResponse(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
-      "Content-Type": "application/json",
+      ...extraHeaders,
       ...CORS_HEADERS,
-      ...extraHeaders
+      "Content-Type": "application/json"
     }
   });
 }
