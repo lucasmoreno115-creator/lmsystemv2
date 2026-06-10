@@ -1,17 +1,19 @@
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, x-admin-token"
+};
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    const corsHeaders = {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, x-admin-token",
-    };
-
     if (request.method === "OPTIONS") {
-      return new Response(null, { status: 204, headers: corsHeaders });
+      return new Response(null, {
+        status: 204,
+        headers: CORS_HEADERS
+      });
     }
 
     try {
@@ -21,7 +23,7 @@ export default {
           status: "ok",
           version: "LM_SYSTEM_ZERO_V1",
           timestamp: new Date().toISOString()
-        }, 200, corsHeaders);
+        }, 200, CORS_HEADERS);
       }
 
       if (url.pathname.startsWith("/api/admin/")) {
@@ -29,7 +31,7 @@ export default {
           return jsonResponse({
             ok: false,
             error: { code: "UNAUTHORIZED", message: "Unauthorized" }
-          }, 401, corsHeaders);
+          }, 401, CORS_HEADERS);
         }
 
         if (request.method === "GET" && url.pathname === "/api/admin/leads") {
@@ -37,7 +39,7 @@ export default {
             return jsonResponse({
               ok: false,
               error: { code: "DB_NOT_CONFIGURED", message: "Binding D1 env.DB não configurado." }
-            }, 500, corsHeaders);
+            }, 500, CORS_HEADERS);
           }
 
           await ensureSchema(env.DB);
@@ -92,7 +94,7 @@ export default {
             };
           });
 
-          return jsonResponse({ ok: true, data: leads }, 200, corsHeaders);
+          return jsonResponse({ ok: true, data: leads }, 200, CORS_HEADERS);
         }
 
 
@@ -101,7 +103,7 @@ export default {
             return jsonResponse({
               ok: false,
               error: { code: "DB_NOT_CONFIGURED", message: "Binding D1 env.DB não configurado." }
-            }, 500, corsHeaders);
+            }, 500, CORS_HEADERS);
           }
 
           await ensureSchema(env.DB);
@@ -126,7 +128,7 @@ export default {
           `).all();
 
           const metrics = buildMetrics(rows?.results || [], period);
-          return jsonResponse({ ok: true, data: metrics }, 200, corsHeaders);
+          return jsonResponse({ ok: true, data: metrics }, 200, CORS_HEADERS);
         }
 
         if (request.method === "GET" && url.pathname === "/api/admin/alerts") {
@@ -134,11 +136,11 @@ export default {
             return jsonResponse({
               ok: false,
               error: { code: "DB_NOT_CONFIGURED", message: "Binding D1 env.DB não configurado." }
-            }, 500, corsHeaders);
+            }, 500, CORS_HEADERS);
           }
           await ensureSchema(env.DB);
           const alertData = await generateCommercialAlerts(env.DB);
-          return jsonResponse({ ok: true, data: alertData }, 200, corsHeaders);
+          return jsonResponse({ ok: true, data: alertData }, 200, CORS_HEADERS);
         }
 
         if (request.method === "POST" && url.pathname === "/api/admin/alerts/send") {
@@ -146,15 +148,15 @@ export default {
             return jsonResponse({
               ok: false,
               error: { code: "DB_NOT_CONFIGURED", message: "Binding D1 env.DB não configurado." }
-            }, 500, corsHeaders);
+            }, 500, CORS_HEADERS);
           }
           await ensureSchema(env.DB);
           const alertData = await generateCommercialAlerts(env.DB);
           const sendResult = await sendWhatsAppMessage(env, alertData.message);
           if (!sendResult.ok) {
-            return jsonResponse({ ok: false, error: sendResult.error }, sendResult.status || 400, corsHeaders);
+            return jsonResponse({ ok: false, error: sendResult.error }, sendResult.status || 400, CORS_HEADERS);
           }
-          return jsonResponse({ ok: true, data: { sent: true, provider: sendResult.provider, generatedAt: alertData.generatedAt } }, 200, corsHeaders);
+          return jsonResponse({ ok: true, data: { sent: true, provider: sendResult.provider, generatedAt: alertData.generatedAt } }, 200, CORS_HEADERS);
         }
 
         if (request.method === "PATCH" && /^\/api\/admin\/leads\/[^/]+\/status$/.test(url.pathname)) {
@@ -162,7 +164,7 @@ export default {
             return jsonResponse({
               ok: false,
               error: { code: "DB_NOT_CONFIGURED", message: "Binding D1 env.DB não configurado." }
-            }, 500, corsHeaders);
+            }, 500, CORS_HEADERS);
           }
 
           await ensureSchema(env.DB);
@@ -184,10 +186,10 @@ export default {
             return jsonResponse({
               ok: false,
               error: { code: "NOT_FOUND", message: "Lead não encontrado." }
-            }, 404, corsHeaders);
+            }, 404, CORS_HEADERS);
           }
 
-          return jsonResponse({ ok: true, data: { leadId, status } }, 200, corsHeaders);
+          return jsonResponse({ ok: true, data: { leadId, status } }, 200, CORS_HEADERS);
         }
 
         if (request.method === "PATCH" && /^\/api\/admin\/leads\/[^/]+\/commercial$/.test(url.pathname)) {
@@ -195,7 +197,7 @@ export default {
             return jsonResponse({
               ok: false,
               error: { code: "DB_NOT_CONFIGURED", message: "Binding D1 env.DB não configurado." }
-            }, 500, corsHeaders);
+            }, 500, CORS_HEADERS);
           }
           await ensureSchema(env.DB);
           const leadId = url.pathname.split("/")[4];
@@ -214,33 +216,33 @@ export default {
             return jsonResponse({
               ok: false,
               error: { code: "NOT_FOUND", message: "Lead não encontrado." }
-            }, 404, corsHeaders);
+            }, 404, CORS_HEADERS);
           }
 
           return jsonResponse({
             ok: true,
             data: { leadId, notes: notes || "", nextAction: nextAction || "", followUpAt: followUpAt || "" }
-          }, 200, corsHeaders);
+          }, 200, CORS_HEADERS);
         }
 
         return jsonResponse({
           ok: false,
           error: { code: "NOT_FOUND", message: "Rota não encontrada." }
-        }, 404, corsHeaders);
+        }, 404, CORS_HEADERS);
       }
 
       if (request.method !== "POST" || url.pathname !== "/api/diagnostic/evaluate") {
         return jsonResponse({
           ok: false,
           error: { code: "NOT_FOUND", message: "Rota não encontrada." }
-        }, 404, corsHeaders);
+        }, 404, CORS_HEADERS);
       }
 
       if (!env.DB) {
         return jsonResponse({
           ok: false,
           error: { code: "DB_NOT_CONFIGURED", message: "Binding D1 env.DB não configurado." }
-        }, 500, corsHeaders);
+        }, 500, CORS_HEADERS);
       }
 
       const body = await safeJson(request);
@@ -324,7 +326,7 @@ export default {
           tags,
           strategic
         }
-      }, 200, corsHeaders);
+      }, 200, CORS_HEADERS);
 
     } catch (error) {
       console.error("LM_SYSTEM_ERROR", {
@@ -342,7 +344,7 @@ export default {
       return jsonResponse({
         ok: false,
         error: { code, message }
-      }, status, corsHeaders);
+      }, status, CORS_HEADERS);
     }
   }
   ,
@@ -938,8 +940,15 @@ async function ensureColumn(db, tableName, columnName, columnType) {
   }
 }
 
-function jsonResponse(payload, status, headers) {
-  return new Response(JSON.stringify(payload), { status, headers });
+function jsonResponse(data, status = 200, extraHeaders = {}) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      ...CORS_HEADERS,
+      ...extraHeaders
+    }
+  });
 }
 
 function appError(code, message, status = 500) {
