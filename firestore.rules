@@ -32,7 +32,7 @@ service cloud.firestore {
       function isValidLeadCreate() {
         return request.resource.data.keys().hasOnly([
             'name', 'email', 'whatsapp', 'goal', 'lmScore', 'classification', 'tags',
-            'leadValue', 'recommendedOffer', 'dimensions', 'coachSummary', 'priority', 'status', 'createdAt'
+            'leadValue', 'dimensions', 'coachSummary', 'priority', 'status', 'createdAt'
           ])
           && request.resource.data.name is string
           && request.resource.data.email is string
@@ -45,7 +45,6 @@ service cloud.firestore {
           && request.resource.data.tags is list
           && request.resource.data.tags.size() <= 5
           && request.resource.data.leadValue in ['high', 'medium', 'low']
-          && request.resource.data.recommendedOffer in ['produto_digital', 'consultoria_online', 'presencial']
           && hasValidDimensions(request.resource.data.dimensions)
           && request.resource.data.coachSummary is string
           && (!('priority' in request.resource.data) || isValidPriority(request.resource.data.priority))
