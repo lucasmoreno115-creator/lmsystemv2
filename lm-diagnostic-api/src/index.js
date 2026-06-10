@@ -1,7 +1,7 @@
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type"
+  "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, x-admin-token"
 };
 
 export default {
@@ -25,6 +25,15 @@ export default {
         });
       }
 
+      if (request.method === "GET" && url.pathname === "/api/admin/leads") {
+        return handleAdminLeadsList(request, env);
+      }
+
+      const statusMatch = url.pathname.match(/^\/api\/admin\/leads\/([^/]+)\/status$/);
+      if (request.method === "PATCH" && statusMatch) {
+        return handleAdminLeadStatus(request, env, decodeURIComponent(statusMatch[1]));
+      }
+
       if (request.method !== "POST" || url.pathname !== "/api/diagnostic/evaluate") {
         return jsonResponse({
           ok: false,
@@ -32,12 +41,7 @@ export default {
         }, 404, CORS_HEADERS);
       }
 
-      if (!env.DB) {
-        return jsonResponse({
-          ok: false,
-          error: { code: "DB_NOT_CONFIGURED", message: "Binding D1 env.DB não configurado." }
-        }, 500, CORS_HEADERS);
-      }
+      ensureDb(env);
 
       const body = await safeJson(request);
       const normalized = validateAndNormalize(body);
@@ -142,6 +146,108 @@ export default {
     }
   }
 };
+
+
+async function handleAdminLeadsList(request, env) {
+  validateAdminToken(request, env);
+  ensureDb(env);
+  await ensureSchema(env.DB);
+
+  const result = await env.DB.prepare(`
+    SELECT
+      leads.id AS leadId,
+      leads.name,
+      leads.email,
+      leads.whatsapp,
+      leads.goal,
+      leads.status,
+      leads.created_at AS createdAt,
+      latest_result.lm_score AS lmScore,
+      latest_result.classification,
+      latest_result.lead_priority AS leadPriority,
+      latest_result.tags_json AS tags,
+      latest_result.strategic_result_json AS strategic
+    FROM leads
+    LEFT JOIN diagnostic_results latest_result
+      ON latest_result.id = (
+        SELECT diagnostic_results.id
+        FROM diagnostic_results
+        WHERE diagnostic_results.lead_id = leads.id
+        ORDER BY diagnostic_results.created_at DESC, diagnostic_results.id DESC
+        LIMIT 1
+      )
+    ORDER BY leads.created_at DESC
+  `).all();
+
+  const leads = (result?.results || []).map((lead) => ({
+    leadId: lead.leadId,
+    name: lead.name,
+    email: lead.email,
+    whatsapp: lead.whatsapp,
+    goal: lead.goal,
+    status: lead.status,
+    createdAt: lead.createdAt,
+    lmScore: lead.lmScore,
+    classification: lead.classification,
+    leadPriority: lead.leadPriority,
+    tags: parseJsonField(lead.tags, []),
+    strategic: parseJsonField(lead.strategic, null)
+  }));
+
+  return jsonResponse({ ok: true, data: leads }, 200, CORS_HEADERS);
+}
+
+async function handleAdminLeadStatus(request, env, leadId) {
+  validateAdminToken(request, env);
+  ensureDb(env);
+  await ensureSchema(env.DB);
+
+  const body = await safeJson(request);
+  const status = cleanString(body?.status).toUpperCase();
+  const allowedStatuses = new Set(["NEW", "CONTACTED", "QUALIFIED", "CONVERTED", "LOST"]);
+
+  if (!allowedStatuses.has(status)) {
+    throw appError("VALIDATION_ERROR", "Status inválido.", 400);
+  }
+
+  const result = await env.DB.prepare(`
+    UPDATE leads
+    SET status = ?
+    WHERE id = ?
+  `).bind(status, leadId).run();
+
+  const changed = result?.meta?.changes ?? result?.changes ?? 0;
+  if (changed === 0) {
+    throw appError("NOT_FOUND", "Lead não encontrado.", 404);
+  }
+
+  return jsonResponse({ ok: true }, 200, CORS_HEADERS);
+}
+
+function validateAdminToken(request, env) {
+  const expectedToken = cleanString(env.ADMIN_TOKEN);
+  const receivedToken = cleanString(request.headers.get("x-admin-token"));
+
+  if (!expectedToken || !receivedToken || receivedToken !== expectedToken) {
+    throw appError("UNAUTHORIZED", "Token administrativo ausente ou inválido.", 401);
+  }
+}
+
+function ensureDb(env) {
+  if (!env.DB) {
+    throw appError("DB_NOT_CONFIGURED", "Binding D1 env.DB não configurado.", 500);
+  }
+}
+
+function parseJsonField(value, fallback) {
+  if (!value) return fallback;
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    return fallback;
+  }
+}
 
 async function safeJson(request) {
   try {

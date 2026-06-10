@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel de Leads | Diagnóstico LM</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #0f1117;
+      --panel: rgba(255, 255, 255, 0.08);
+      --panel-strong: rgba(255, 255, 255, 0.14);
+      --text: #f4f7fb;
+      --muted: #a9b3c7;
+      --line: rgba(255, 255, 255, 0.14);
+      --accent: #d7b46a;
+      --accent-dark: #8a6624;
+      --danger: #ff7a7a;
+      --success: #82e6b0;
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f5f1ea;
+        --panel: rgba(255, 255, 255, 0.72);
+        --panel-strong: rgba(255, 255, 255, 0.92);
+        --text: #1d2430;
+        --muted: #657086;
+        --line: rgba(24, 31, 42, 0.12);
+        --shadow: 0 24px 70px rgba(87, 66, 35, 0.14);
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(215, 180, 106, 0.28), transparent 34rem),
+        radial-gradient(circle at bottom right, rgba(87, 109, 161, 0.20), transparent 30rem),
+        var(--bg);
+      color: var(--text);
+      padding: 32px;
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3.4rem);
+      letter-spacing: -0.06em;
+      line-height: 0.95;
+    }
+
+    .subtitle {
+      max-width: 620px;
+      margin: 14px 0 0;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+
+    input, select, button {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      font: inherit;
+    }
+
+    input, select {
+      width: 100%;
+      color: var(--text);
+      background: var(--panel-strong);
+      padding: 13px 14px;
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(215, 180, 106, 0.18);
+    }
+
+    button {
+      cursor: pointer;
+      color: #17120a;
+      background: linear-gradient(135deg, var(--accent), #f4d892);
+      font-weight: 800;
+      padding: 13px 18px;
+      transition: transform 160ms ease, opacity 160ms ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:disabled { cursor: not-allowed; opacity: 0.55; transform: none; }
+
+    .status-line {
+      min-height: 24px;
+      margin: 0 2px 14px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .status-line.error { color: var(--danger); }
+    .status-line.success { color: var(--success); }
+
+    .table-wrap {
+      overflow: auto;
+      border-radius: 24px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 980px;
+      background: var(--panel);
+    }
+
+    th, td {
+      padding: 16px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+      font-size: 0.92rem;
+    }
+
+    th {
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.06);
+      font-size: 0.74rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    tbody tr:hover { background: rgba(215, 180, 106, 0.07); }
+    tbody tr:last-child td { border-bottom: 0; }
+
+    .score, .priority, .classification {
+      display: inline-flex;
+      align-items: center;
+      min-height: 32px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel-strong);
+      padding: 6px 10px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .score { color: var(--accent); }
+    .empty {
+      padding: 36px 18px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .status-control {
+      display: grid;
+      grid-template-columns: minmax(130px, 1fr) auto;
+      gap: 8px;
+      min-width: 230px;
+    }
+
+    .status-control button { padding-inline: 12px; }
+
+    @media (max-width: 720px) {
+      body { padding: 18px; }
+      .hero, .toolbar { grid-template-columns: 1fr; display: grid; }
+      .toolbar button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">App Diagnóstico LM</p>
+        <h1>Painel de leads</h1>
+        <p class="subtitle">Visualize os leads capturados pelo diagnóstico, acompanhe a pontuação LM e atualize o status comercial sem misturar com o Portal.</p>
+      </div>
+    </section>
+
+    <section class="card toolbar" aria-label="Autenticação administrativa">
+      <input id="adminToken" type="password" autocomplete="off" placeholder="Insira o admin token" aria-label="Admin token">
+      <button id="loadButton" type="button">Carregar leads</button>
+    </section>
+
+    <p id="message" class="status-line" role="status"></p>
+
+    <section class="card table-wrap" aria-label="Lista de leads">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Nome</th>
+            <th>WhatsApp</th>
+            <th>Objetivo</th>
+            <th>LM Score</th>
+            <th>Classificação</th>
+            <th>Prioridade</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="leadsBody">
+          <tr><td class="empty" colspan="8">Informe o token e clique em “Carregar leads”.</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    const API_URL = "https://lm-diagnostic-api.lucasmoreno115.workers.dev/api/admin/leads";
+    const STATUSES = ["NEW", "CONTACTED", "QUALIFIED", "CONVERTED", "LOST"];
+
+    const tokenInput = document.querySelector("#adminToken");
+    const loadButton = document.querySelector("#loadButton");
+    const message = document.querySelector("#message");
+    const leadsBody = document.querySelector("#leadsBody");
+
+    loadButton.addEventListener("click", loadLeads);
+    tokenInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") loadLeads();
+    });
+
+    async function loadLeads() {
+      const token = tokenInput.value.trim();
+      if (!token) {
+        setMessage("Informe o admin token para continuar.", "error");
+        return;
+      }
+
+      setLoading(true, "Carregando leads...");
+
+      try {
+        const response = await fetch(API_URL, {
+          headers: { "x-admin-token": token }
+        });
+        const payload = await response.json().catch(() => ({}));
+
+        if (!response.ok || !payload.ok) {
+          throw new Error(payload?.error?.message || "Não foi possível carregar os leads.");
+        }
+
+        renderLeads(payload.data || []);
+        setMessage(`${payload.data?.length || 0} lead(s) carregado(s).`, "success");
+      } catch (error) {
+        leadsBody.innerHTML = `<tr><td class="empty" colspan="8">${escapeHtml(error.message)}</td></tr>`;
+        setMessage(error.message, "error");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function renderLeads(leads) {
+      if (!leads.length) {
+        leadsBody.innerHTML = '<tr><td class="empty" colspan="8">Nenhum lead encontrado.</td></tr>';
+        return;
+      }
+
+      leadsBody.innerHTML = leads.map((lead) => `
+        <tr data-lead-id="${escapeHtml(lead.leadId)}">
+          <td>${formatDate(lead.createdAt)}</td>
+          <td>${escapeHtml(lead.name || "-")}<br><small>${escapeHtml(lead.email || "")}</small></td>
+          <td>${escapeHtml(lead.whatsapp || "-")}</td>
+          <td>${formatGoal(lead.goal)}</td>
+          <td><span class="score">${lead.lmScore ?? "-"}</span></td>
+          <td><span class="classification">${formatLabel(lead.classification)}</span></td>
+          <td><span class="priority">${formatLabel(lead.leadPriority)}</span></td>
+          <td>${renderStatusControl(lead)}</td>
+        </tr>
+      `).join("");
+
+      document.querySelectorAll("[data-update-status]").forEach((button) => {
+        button.addEventListener("click", updateStatus);
+      });
+    }
+
+    function renderStatusControl(lead) {
+      const options = STATUSES.map((status) => `
+        <option value="${status}" ${status === lead.status ? "selected" : ""}>${status}</option>
+      `).join("");
+
+      return `
+        <div class="status-control">
+          <select aria-label="Status do lead">${options}</select>
+          <button type="button" data-update-status>Atualizar</button>
+        </div>
+      `;
+    }
+
+    async function updateStatus(event) {
+      const row = event.currentTarget.closest("tr");
+      const leadId = row?.dataset?.leadId;
+      const status = row?.querySelector("select")?.value;
+      const token = tokenInput.value.trim();
+
+      if (!leadId || !status || !token) {
+        setMessage("Token, lead ou status ausente.", "error");
+        return;
+      }
+
+      event.currentTarget.disabled = true;
+      setMessage("Atualizando status...");
+
+      try {
+        const response = await fetch(`${API_URL}/${encodeURIComponent(leadId)}/status`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-token": token
+          },
+          body: JSON.stringify({ status })
+        });
+        const payload = await response.json().catch(() => ({}));
+
+        if (!response.ok || !payload.ok) {
+          throw new Error(payload?.error?.message || "Não foi possível atualizar o status.");
+        }
+
+        setMessage("Status atualizado com sucesso.", "success");
+      } catch (error) {
+        setMessage(error.message, "error");
+      } finally {
+        event.currentTarget.disabled = false;
+      }
+    }
+
+    function setLoading(isLoading, text) {
+      loadButton.disabled = isLoading;
+      if (text) setMessage(text);
+    }
+
+    function setMessage(text, type = "") {
+      message.textContent = text || "";
+      message.className = `status-line ${type}`.trim();
+    }
+
+    function formatDate(value) {
+      if (!value) return "-";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return value;
+      return new Intl.DateTimeFormat("pt-BR", {
+        dateStyle: "short",
+        timeStyle: "short"
+      }).format(date);
+    }
+
+    function formatGoal(value) {
+      const labels = {
+        emagrecimento: "Emagrecimento",
+        definicao_muscular: "Definição muscular",
+        ganho_massa_muscular: "Ganho de massa",
+        saude_condicionamento: "Saúde e condicionamento"
+      };
+      return labels[value] || formatLabel(value);
+    }
+
+    function formatLabel(value) {
+      if (!value) return "-";
+      return String(value).replaceAll("_", " ").toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>'"]/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "'": "&#39;",
+        '"': "&quot;"
+      }[char]));
+    }
+  </script>
+</body>
+</html>
