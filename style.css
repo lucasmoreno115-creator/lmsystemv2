@@ -275,6 +275,7 @@ button:disabled {
 
 .insight-card,
 .coach-summary-box,
+.priority-direction-box,
 .next-step-box {
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 20px;
@@ -295,6 +296,7 @@ button:disabled {
 
 .insight-card h3,
 .coach-summary-box h3,
+.priority-direction-box h3,
 .next-step-box h3 {
   margin: 0 0 10px;
   font-size: 1.3rem;
@@ -302,6 +304,7 @@ button:disabled {
 
 .insight-card p,
 .coach-summary-box p,
+.priority-direction-box p,
 .next-step-box p {
   margin: 0;
 }
@@ -339,6 +342,7 @@ button:disabled {
   margin: 22px 0 0;
 }
 
+.priority-direction-box,
 .next-step-box {
   margin-top: 16px;
 }
